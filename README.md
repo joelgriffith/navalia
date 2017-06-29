@@ -1,5 +1,7 @@
 # Navalia
 
+![Navalia Demo](/assets/navalia.gif?raw=true "Navalia Demo")
+
 Automate and scale your browser work. Navalia is a high-level API that:
 
 - Runs and controls multiple instances of particular browser (currently Chrome).
