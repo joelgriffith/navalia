@@ -1,4 +1,4 @@
-# Navalia
+![Navalia Logo](/assets/logo.png?raw=true "Navalia")
 
 ![Navalia Demo](/assets/navalia.gif?raw=true "Navalia Demo")
 
