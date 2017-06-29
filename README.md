@@ -64,7 +64,7 @@ An object of options to pass into the startup of Chrome. These are all the hashe
 
 ### `register: Function((chrome: chromeInstance): Promise<any>): void`
 
-Registers a function, to be called with an instance of chrome (or whatever browser in the future). This function will execute immediately if there's an available instance. If not, the function is queued and will be handled by the next available browser.
+Registers a function, to be called with an instance of chrome (or whatever browser in the future). This function will execute immediately if there's an available instance. If not, the function is queued and will be handled by the next available browser. See the below docs on the browser API.
 
 The registered function _must_ either return a `Promise`, or a value when using `await`. Internally, Navalia waits for this function to resolve so it can begin other work.
 
@@ -89,3 +89,15 @@ Evaluates the script and returns the output of the last statement. The result is
 ### `setWindowSize: Function(width: number, height: number): Promise<any>`
 
 Sets the window size of the browser by width and height.
+
+## Roadmap
+
+In no particular order, this is the vision of navalia going forward:
+
+- [ ] Expanded browser API (pdf rendering, network watching, more).
+- [ ] Bring more vendors onto the framework.
+- [ ] Better typings around externals with no @type support.
+- [ ] Parameterization on killing long-running jobs.
+- [ ] Unit testing all features.
+- [ ] Integration testing with the various vendors so our API's don't break when theirs do.
+- [ ] Travis, coveralls, greenkeeper, and other handy-dandy tools to automate chore tasks.

@@ -1,14 +1,14 @@
 import * as os from 'os';
 import Chrome, { chromeOptions } from './chrome';
 
-interface clusterParams {
+export interface clusterParams {
   numInstances?: number
   maxJobs?: number
   workerTTL?: number
   chromeOptions?: chromeOptions
 }
 
-interface jobFunc {
+export interface jobFunc {
   (chrome: Chrome): Promise<any>;
 }
 

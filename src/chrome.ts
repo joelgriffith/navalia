@@ -14,9 +14,9 @@ export interface navigateOpts {
 }
 
 export default class {
-  readonly chromeBootOptions: chromeOptions;
   private chrome: any;
 
+  public chromeBootOptions: chromeOptions;
   public busy: boolean;
   public jobsComplete: number;
   public port: number;

@@ -2,9 +2,13 @@
   "name": "navalia",
   "version": "0.0.1",
   "description": "A browser automation manager with a consistent API",
-  "main": "index.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
-    "test": "echo 'No Tests'"
+    "clean": "rimraf build",
+    "prepublish": "npm run build",
+    "test": "echo 'No Tests'",
+    "build": "npm run clean && tsc"
   },
   "keywords": [
     "chrome",
@@ -19,6 +23,7 @@
     "@types/lodash": "^4.14.67",
     "@types/node": "^6.0.4",
     "nodemon": "^1.11.0",
+    "rimraf": "^2.6.1",
     "typescript": "^2.4.1"
   },
   "dependencies": {

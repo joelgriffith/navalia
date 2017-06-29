@@ -1,5 +1,9 @@
+# Built Assets
 node_modules/
 build/
-db
+
+# MAC
 .DS_Store
-dump.rdb
+
+# Temp files
+*.log
