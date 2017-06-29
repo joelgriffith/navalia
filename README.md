@@ -19,23 +19,20 @@ import Navalia from 'Navalia';
 const navalia = new Navalia();
 
 async function doStuff() {
-  // Wait for startup since it has to launch applications
+  // Wait for startup since navalia is launching applications
   await navalia.startup();
 
   // Using async/await
   navalia.register(async(chrome) => {
-    try {
-      await chrome.navigate('http://www.cnn.com/');
-      await chrome.screenShot('/Users/jgriffith/Downloads/cnn.png'));
-      return true;
-    } catch (error) {
-      return error;
-    }
+    await chrome.navigate('http://www.cnn.com/');
+    await chrome.pdf('/Users/jgriffith/Downloads/cnn.pdf');
+    return true;
   });
 
   // Or Promises
   navalia.register((chrome) => {
     return chrome.navigate('http://www.google.com/')
+      .then(() => chrome.setWindowSize(320, 960))
       .then(() => chrome.screenShot('/Users/jgriffith/Downloads/google.png'))
       .catch((error) => console.log(error.toString()))
   });
@@ -85,6 +82,14 @@ Navigates the browser to a particular URL. Can supply a second argument, which i
 ### `evaluate: Function(expression: string): Promise<any>`
 
 Evaluates the script and returns the output of the last statement. The result is a meta-object containing the output plus some meta-data about the result. Currently the expression _must_ be a string, but we're investigating ways to make it a bare function to execute.
+
+### `screenShot: Function(filePath: string): Promise<any>`
+
+Saves a PNG of the current page's viewport. file-path should be the absolute-path where this file will will be saved.
+
+### `pdf: Function(filePath: string): Promise<any>`
+
+Saves a PDF of the current page. file-path should be the absolute-path where this file will will be saved.
 
 ### `setWindowSize: Function(width: number, height: number): Promise<any>`
 

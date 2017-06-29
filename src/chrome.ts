@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as chromeLauncher from 'lighthouse/chrome-launcher/chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
+import * as path from 'path';
 
 export interface chromeOptions {
   headless?: boolean
@@ -15,14 +16,17 @@ export interface navigateOpts {
 
 export default class {
   private chrome: any;
+  private kill: Function;
+  private isBusy: boolean;
+  private isExpired: boolean;
 
   public chromeBootOptions: chromeOptions;
-  public busy: boolean;
   public jobsComplete: number;
   public port: number;
 
   constructor(chromeBootOptions: chromeOptions | undefined) {
-    this.busy = false;
+    this.isBusy = false;
+    this.isExpired = false;
     this.jobsComplete = 0;
     this.chromeBootOptions ={
       headless: true,
@@ -40,9 +44,9 @@ export default class {
 
     // Boot Chrome
     const browser = await chromeLauncher.launch({ chromeFlags });
-    console.info(`CHROME Launched: ${chromeFlags.join(' ')} :${browser.port}`);
 
     this.port = browser.port;
+    this.kill = browser.kill;
 
     const cdp = await CDP({ port: browser.port });
 
@@ -52,7 +56,7 @@ export default class {
   }
 
   public async navigate(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
-    this.chrome.busy = true;
+    this.isBusy = true;
     await this.chrome.Page.navigate({ url });
 
     if (opts.onload) {
@@ -64,13 +68,16 @@ export default class {
   }
 
   public async evaluate(expression: string): Promise<any> {
-    this.chrome.busy = true;
+    this.isBusy = true;
 
     return this.chrome.Runtime.evaluate({ expression });
   }
 
-  public async screenShot(filePath: string) {
-    this.chrome.busy = true;
+  public async screenShot(filePath: string): Promise<any> {
+    if (!path.isAbsolute(filePath)) {
+      throw new Error(`Filepath is not absolute: ${filePath}`);
+    }
+    this.isBusy = true;
 
     const base64Image = await this.chrome.Page.captureScreenshot();
     const buffer = new Buffer(base64Image.data, 'base64');
@@ -78,22 +85,43 @@ export default class {
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
   }
 
+  public async pdf(filePath: string): Promise<any> {
+    if (!path.isAbsolute(filePath)) {
+      throw new Error(`Filepath is not absolute: ${filePath}`);
+    }
+    this.isBusy = true;
+
+    const base64Image = await this.chrome.Page.printToPDF();
+    const buffer = new Buffer(base64Image.data, 'base64');
+
+    return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+  }
+
   public async setWindowSize(width:number, height:number): Promise<any> {
-    this.chrome.busy = true;
+    this.isBusy = true;
 
     return this.chrome.Emulation.setVisibleSize({ width: width, height: height });
   }
 
   public done(): void {
-    this.busy = false;
+    this.isBusy = false;
     this.jobsComplete++;
   }
 
   public async destroy(): Promise<void> {
     await this.chrome.close();
+    this.kill();
   }
 
-  public getBusy(): boolean {
-    return this.chrome.busy;
+  public setExpired(): void {
+    this.isExpired = true;
+  }
+
+  public getIsBusy(): boolean {
+    return this.isBusy;
+  }
+
+  public getIsExpired(): boolean {
+    return this.isExpired;
   }
 }
