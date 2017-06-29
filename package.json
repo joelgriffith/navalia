@@ -1,0 +1,30 @@
+{
+  "name": "navalia",
+  "version": "0.0.1",
+  "description": "A browser automation manager with a consistent API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'No Tests'"
+  },
+  "keywords": [
+    "chrome",
+    "headless",
+    "cluster",
+    "queue",
+    "navalia"
+  ],
+  "author": "jgriffith",
+  "license": "LGPL-3.0",
+  "devDependencies": {
+    "@types/lodash": "^4.14.67",
+    "@types/node": "^6.0.4",
+    "nodemon": "^1.11.0",
+    "typescript": "^2.4.1"
+  },
+  "dependencies": {
+    "chrome-remote-interface": "^0.23.3",
+    "lighthouse": "^2.1.0",
+    "lodash": "^4.17.4",
+    "ts-node": "^3.1.0"
+  }
+}

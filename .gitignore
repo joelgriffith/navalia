@@ -1,0 +1,5 @@
+node_modules/
+build/
+db
+.DS_Store
+dump.rdb
