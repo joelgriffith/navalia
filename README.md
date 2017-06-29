@@ -61,39 +61,42 @@ The total-time-of-life an instance should run before it's rebooted. Defaults to 
 `chromeOptions?: object`
 An object of options to pass into the startup of Chrome. These are all the hashes one would use on the CLI, but are instead snakeCased. For instances `--headless` becomes `headless: true`, and `--hide-scrollbars` becomes `noScrollbars: true`. Defaults to `{ headless: true, disableGpu: true, hideScrollbars: true }`
 
-### `register: Function((chrome: chromeInstance): Promise<any>): void`
+`verbose?: boolean`
+Specifies whether or not to output log information via `console.info`. Defaults to `false`.
+
+#### `register: Function((chrome: chromeInstance): Promise<any>): void`
 
 Registers a function, to be called with an instance of chrome (or whatever browser in the future). This function will execute immediately if there's an available instance. If not, the function is queued and will be handled by the next available browser. See the below docs on the browser API.
 
 The registered function _must_ either return a `Promise`, or a value when using `await`. Internally, Navalia waits for this function to resolve so it can begin other work.
 
-### `startup: Function(): Promise<void>`
+#### `startup: Function(): Promise<void>`
 
 Starts the browser(s) and sets them up for work. Since this action is asyncrounous, it's recommended that you delay queueing jobs until this method returns.
 
-### `launchInstance: Function(options:object): Promise<instance>`
+#### `launchInstance: Function(options:object): Promise<instance>`
 
 Launches a new instance, which can begin to immediately work if there's a queue already formed. If not, this instance will be kept around for futher jobs.
 
 ## Browser API
 
-### `navigate: Function(url: string, opts: object): Promise<void>`
+#### `navigate: Function(url: string, opts: object): Promise<void>`
 
 Navigates the browser to a particular URL. Can supply a second argument, which is a hash that currently supports only `onload`, fired when the browsers `window.onload` event takes place.
 
-### `evaluate: Function(expression: string): Promise<any>`
+#### `evaluate: Function(expression: string): Promise<any>`
 
 Evaluates the script and returns the output of the last statement. The result is a meta-object containing the output plus some meta-data about the result. Currently the expression _must_ be a string, but we're investigating ways to make it a bare function to execute.
 
-### `screenShot: Function(filePath: string): Promise<any>`
+#### `screenShot: Function(filePath: string): Promise<any>`
 
 Saves a PNG of the current page's viewport. file-path should be the absolute-path where this file will will be saved.
 
-### `pdf: Function(filePath: string): Promise<any>`
+#### `pdf: Function(filePath: string): Promise<any>`
 
 Saves a PDF of the current page. file-path should be the absolute-path where this file will will be saved.
 
-### `setWindowSize: Function(width: number, height: number): Promise<any>`
+#### `setWindowSize: Function(width: number, height: number): Promise<any>`
 
 Sets the window size of the browser by width and height.
 
