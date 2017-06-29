@@ -104,7 +104,7 @@ export default class {
     return chrome;
   }
 
-  public reigster(job: jobFunc): void {
+  public register(job: jobFunc): void {
     if (this.chromeInstances.every(isBusy)) {
       console.info('NAVALIA: All instances busy, queueing');
       this.queueList.push(job);

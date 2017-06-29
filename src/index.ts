@@ -1,3 +1,3 @@
 import Navalia from './navalia';
 
-export default Navalia;
+module.exports = Navalia;
