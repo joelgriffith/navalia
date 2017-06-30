@@ -20,6 +20,7 @@
   "author": "jgriffith",
   "license": "LGPL-3.0",
   "devDependencies": {
+    "@types/debug": "0.0.29",
     "@types/lodash": "^4.14.67",
     "@types/node": "^6.0.4",
     "nodemon": "^1.11.0",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "chrome-remote-interface": "^0.23.3",
+    "debug": "^2.6.8",
     "lighthouse": "^2.1.0",
     "lodash": "^4.17.4",
     "ts-node": "^3.1.0"
