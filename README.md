@@ -90,6 +90,18 @@ Saves a PDF of the current page. file-path should be the absolute-path where thi
 
 Sets the window size of the browser by width and height.
 
+#### exists: Function(selector: string): Promise<boolean>
+
+Accepts a `querySelector` css-string (example: chrome.exists('.some-class')), and returns a boolean if the selector exists on the page.
+
+#### getHTML: Function(selector: string): Promise<string>
+
+Accepts a `querySelector` css-string (example: chrome.exists('.some-class')), and the HTML of the node. Example:
+
+```
+await chrome.getHTML('.my-button') // <button class="my-button">Click Me!</button>
+```
+
 ## Debugging
 
 Novalia prints nearly every interaction by using the module `debug`. To get debug information, launch your script with:
