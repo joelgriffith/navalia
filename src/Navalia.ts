@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as debug from 'debug';
-import Chrome, { chromeOptions } from './Chrome';
+import { Chrome, chromeOptions } from './Chrome';
 
 const log = debug('navalia');
 
@@ -18,7 +18,7 @@ export interface jobFunc {
 const isBusy = (chrome: Chrome): boolean => chrome.getIsBusy();
 const notBusy = (chrome: Chrome): boolean => !isBusy(chrome);
 
-export default class {
+export class Navalia {
   private chromeInstances: Chrome[];
   private queueList: jobFunc[];
   numInstances: number;
