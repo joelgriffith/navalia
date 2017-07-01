@@ -1,6 +1,6 @@
 {
   "name": "navalia",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A browser automation manager with a consistent API",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -37,11 +37,16 @@
     "ts-node": "^3.1.0"
   },
   "jest": {
-    "moduleFileExtensions": ["ts", "js"],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
     "transform": {
       "^.+\\.(ts)$": "<rootDir>/preprocessor.js"
     },
-    "testMatch": ["**/__tests__/*.(ts|tsx|js)"],
+    "testMatch": [
+      "**/__tests__/*.(ts|tsx|js)"
+    ],
     "transformIgnorePatterns": [
       "<rootDir>/node_modules/(?!lighthouse)"
     ]
