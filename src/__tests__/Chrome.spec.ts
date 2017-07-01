@@ -38,7 +38,7 @@ jest.mock('chrome-remote-interface', () => {
 
 const chromeLauncher = require('lighthouse/chrome-launcher/chrome-launcher');
 
-import { default as Chrome } from '../Chrome';
+import { Chrome } from '../Chrome';
 
 describe('Chrome', () => {
   describe('#launch', () => {
