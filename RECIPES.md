@@ -50,14 +50,14 @@ import { Chrome } from 'navalia';
 
 const chrome: Chrome = new Chrome();
 
-async function savePDF(): Promise<any> {
+async function clickAThing(): Promise<any> {
   await chrome.launch();
   await chrome.navigate('http://news.ycombinator.com');
   await chrome.trigger('click', '.athing');
   return chrome.done();
 }
 
-savePDF();
+clickAThing();
 ```
 
 ## Exists
