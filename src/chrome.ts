@@ -89,6 +89,19 @@ export default class {
     return this.chrome.Runtime.evaluate({ expression });
   }
 
+  private async getSelectorId(selector: string): Promise<number | null> {
+    log(`getting selector '${selector}'`);
+    this.isBusy = true;
+    const document = await this.chrome.DOM.getDocument();
+
+    const { nodeId } = await this.chrome.DOM.querySelector({
+      nodeId: document.root.nodeId,
+      selector,
+    });
+
+    return nodeId;
+  }
+
   public async screenShot(filePath: string): Promise<any> {
     if (!path.isAbsolute(filePath)) {
       throw new Error(`Filepath is not absolute: ${filePath}`);
@@ -120,6 +133,28 @@ export default class {
     this.isBusy = true;
 
     return this.chrome.Emulation.setVisibleSize({ width: width, height: height });
+  }
+
+  public async exists(selector: string): Promise<boolean> {
+    log(`checking if '${selector}' exists`);
+    this.isBusy = true;
+    
+    return !!await this.getSelectorId(selector);
+  }
+
+  public async getHTML(selector: string): Promise<string | null> {
+    log(`getting '${selector}' HTML`);
+    this.isBusy = true;
+
+    const nodeId = await this.getSelectorId(selector);
+
+    if (!nodeId) {
+      return null;
+    }
+
+    const { outerHTML } = await this.chrome.DOM.getOuterHTML({ nodeId });
+
+    return outerHTML;
   }
 
   public done(): void {
