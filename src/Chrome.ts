@@ -171,7 +171,7 @@ export default class {
   }
 
   public async trigger(eventName: triggerEvents, selector: string): Promise<any> {
-    log(`clicking element '${selector}'`);
+    log(`triggering '${eventName}' on '${selector}'`);
     this.isBusy = true;
     let eventClass = '';
 
