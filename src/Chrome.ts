@@ -95,11 +95,15 @@ export class Chrome {
     return;
   }
 
-  public async evaluate(expression: string): Promise<any> {
-    log(`executing script`);
+  public async evaluate(expression: Function, ...args): Promise<any> {
     this.isBusy = true;
 
-    return this.chrome.Runtime.evaluate({ expression });
+    const stringifiedArgs = args.map((arg) => JSON.stringify(arg)).join(',');
+    const script = `(${expression.toString()})(${stringifiedArgs})`;
+    
+    log(`executing script: ${script}`);
+    
+    return this.chrome.Runtime.evaluate({ expression: script, returnValue: true });
   }
 
   private async getSelectorId(selector: string): Promise<number | null> {
@@ -201,18 +205,16 @@ export class Chrome {
         throw `chrome#trigger: Couldn't handle event ${eventName} on selector ${selector}.`;
     }
 
-    const expression = `
-      (function() {
-        const node = document.querySelector('${selector}');
-        const doc = node.ownerDocument ? node.ownerDocument : node;
-        const e = doc.createEvent('${eventClass}');
-        e.initEvent('${eventName}', true);
-        e.synthetic = true;
-        node.dispatchEvent(e, true);
-      })();
-    `;
+    const expression = function(selector, eventName, eventClass) {
+      const node = document.querySelector(selector);
+      const doc = node && node.ownerDocument ? node.ownerDocument : node;
+      const e = doc && doc.createEvent(eventClass);
+      e.initEvent(eventName, true);
+      e.synthetic = true;
+      node.dispatchEvent(e, true);
+    };
 
-    return this.evaluate(expression);
+    return this.evaluate(expression, selector, eventName, eventClass);
   }
 
   public done(): void {
