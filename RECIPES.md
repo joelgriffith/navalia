@@ -88,11 +88,14 @@ Use the `Chrome` constructor to navigate to a page and run some custom javascrip
 ```js
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
+const buyButton = 'button.buy-now';
 
 async function getTitle() {
   await chrome.launch();
   await chrome.navigate('http://www.reddit.com/');
-  const res = await chrome.evaluate('document.querySelector("title").text;');
+  const res = await chrome.evaluate((selector) => {
+    return document.querySelector(selector);
+  }, buyButton);
   console.log(res);
 }
 getTitle();
