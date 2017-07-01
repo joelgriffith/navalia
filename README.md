@@ -8,7 +8,7 @@
 Automate and scale browser workflows.
 
 ```javascript
-const Navalia = require('Navalia');
+const { Navalia } = require('Navalia');
 const navalia = new Navalia({ numInstances: 1 });
 
 const snapshotFavPages = async() => {
@@ -38,6 +38,10 @@ snapshotFavPages();
 - Uses a simple, easy to understand API.
 - Chain operations, including multi-page workflows.
 - Set timers and max-jobs on browsers, forcing a reboot so they stay small memory-wise.
+
+## Examples
+
+Looking for inspiration? [Check out the Recipes](RECIPES.md).
 
 ## API
 
@@ -128,7 +132,7 @@ Triggers an event on the selector using `document.querySelector`. Supported even
 
 ## Debugging
 
-Novalia prints nearly every interaction by using the module `debug`. To get debug information, launch your script with:
+Navalia prints nearly every interaction by using the module `debug`. To get debug information, launch your script with:
 
 ```bash
 # Log all messages. Omit `navalia` or `chrome` to filter out messages

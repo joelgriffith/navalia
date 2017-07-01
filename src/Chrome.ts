@@ -30,7 +30,7 @@ export type triggerEvents =
   'select'
 ;
 
-export default class {
+export class Chrome {
   private chrome: any;
   private kill: Function;
   private isBusy: boolean;
