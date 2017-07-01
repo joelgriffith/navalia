@@ -27,7 +27,7 @@ export default class {
   public jobsComplete: number;
   public port: number;
 
-  constructor(chromeBootOptions: chromeOptions | undefined) {
+  constructor(chromeBootOptions: chromeOptions = {}) {
     this.isBusy = false;
     this.isExpired = false;
     this.jobsComplete = 0;
