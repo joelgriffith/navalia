@@ -8,14 +8,27 @@ import * as debug from 'debug';
 const log = debug('chrome');
 
 export interface chromeOptions {
-  headless?: boolean
-  disableGpu?: boolean
-  hideScrollbars?: boolean
+  [propName: string]: boolean | undefined;
 }
 
 export interface navigateOpts {
   onload?: boolean
 }
+
+export type triggerEvents =
+  'click' |
+  'mousedown' |
+  'mouseup' |
+  'mouseover' |
+  'touchstart' |
+  'touchend' |
+  'focus' |
+  'touchcancel' |
+  'touchmove' |
+  'change' |
+  'blur' |
+  'select'
+;
 
 export default class {
   private chrome: any;
@@ -155,6 +168,51 @@ export default class {
     const { outerHTML } = await this.chrome.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
+  }
+
+  public async trigger(eventName: triggerEvents, selector: string): Promise<any> {
+    log(`clicking element '${selector}'`);
+    this.isBusy = true;
+    let eventClass = '';
+
+    switch (eventName) {
+      case 'click':
+      case 'mousedown':
+      case 'mouseup':
+      case 'mouseover':
+        eventClass = 'MouseEvents';
+        break;
+
+      case 'touchstart':
+      case 'touchend':
+      case 'touchcancel':
+      case 'touchmove':
+        eventClass = 'TouchEvents';
+        break;
+
+      case 'focus':
+      case 'change':
+      case 'blur':
+      case 'select':
+        eventClass = 'HTMLEvents';
+        break;
+
+      default:
+        throw `chrome#trigger: Couldn't handle event ${eventName} on selector ${selector}.`;
+    }
+
+    const expression = `
+      (function() {
+        const node = document.querySelector('${selector}');
+        const doc = node.ownerDocument ? node.ownerDocument : node;
+        const e = doc.createEvent('${eventClass}');
+        e.initEvent('${eventName}', true);
+        e.synthetic = true;
+        node.dispatchEvent(e, true);
+      })();
+    `;
+
+    return this.evaluate(expression);
   }
 
   public done(): void {

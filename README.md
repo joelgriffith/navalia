@@ -71,36 +71,57 @@ Launches a new instance, which can begin to immediately work if there's a queue 
 ## Browser API
 
 #### navigate: Function(url: string, opts: object): Promise<void>
-
+```
+await chrome.navigate('http://www.cnn.com');
+```
 Navigates the browser to a particular URL. Can supply a second argument, which is a hash that currently supports only `onload`, fired when the browsers `window.onload` event takes place.
 
 #### evaluate: Function(expression: string): Promise<any>
-
+```
+await chrome.evaluate('window.location.href'); // http://cnn.com
+```
 Evaluates the script and returns the output of the last statement. The result is a meta-object containing the output plus some meta-data about the result. Currently the expression _must_ be a string, but we're investigating ways to make it a bare function to execute.
 
 #### screenShot: Function(filePath: string): Promise<any>
-
+```
+await chrome.screenShot('/Users/me/Downloads/site.png');
+```
 Saves a PNG of the current page's viewport. file-path should be the absolute-path where this file will will be saved.
 
 #### pdf: Function(filePath: string): Promise<any>
-
+```
+await chrome.pdf('/Users/me/Downloads/site.pdf');
+```
 Saves a PDF of the current page. file-path should be the absolute-path where this file will will be saved.
 
 #### setWindowSize: Function(width: number, height: number): Promise<any>
+```
+await chrome.setWindowSize(960, 320);
+```
 
 Sets the window size of the browser by width and height.
 
 #### exists: Function(selector: string): Promise<boolean>
+```
+await chrome.exists('.my-button'); // true
+```
 
 Accepts a `querySelector` css-string (example: chrome.exists('.some-class')), and returns a boolean if the selector exists on the page.
 
 #### getHTML: Function(selector: string): Promise<string>
-
-Accepts a `querySelector` css-string (example: chrome.exists('.some-class')), and the HTML of the node. Example:
-
 ```
-await chrome.getHTML('.my-button') // <button class="my-button">Click Me!</button>
+await chrome.getHTML('.my-button'); // <button class="my-button">Click Me!</button>
 ```
+
+Accepts a `querySelector` css-string (example: chrome.exists('.some-class')), and the HTML of the node.
+
+#### trigger: Function(event: string, selector: string): Promise<string>
+```
+await chrome.trigger('click', '.my-button'); // Clicks => <button class="my-button">Click Me!</button>
+```
+
+Triggers an event on the selector using `document.querySelector`. Supported events are: 'click', 'mousedown', 'mouseup', 'mouseover', 'touchstart', 'touchend', 'focus', 'touchcancel', 'touchmove', 'change', 'blur', and 'select'.
+
 
 ## Debugging
 
