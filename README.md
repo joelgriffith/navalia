@@ -1,5 +1,7 @@
 # Navalia
 
+[![npm version](https://badge.fury.io/js/navalia.svg)](https://badge.fury.io/js/navalia)
+
 `npm install --save navalia`
 
 Automate and scale browser workflows.
