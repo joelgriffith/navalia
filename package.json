@@ -1,6 +1,6 @@
 {
   "name": "navalia",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A browser automation manager with a consistent API",
   "main": "build/index.js",
   "types": "build/index.d.ts",
