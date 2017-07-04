@@ -4,11 +4,20 @@ import * as chromeLauncher from 'chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
 import * as path from 'path';
 import * as debug from 'debug';
+import { EventEmitter } from 'events';
+
+const events = {
+  done: 'done',
+};
 
 const log = debug('chrome');
 
 export interface chromeOptions {
   [propName: string]: boolean | undefined;
+}
+
+export interface customOptions {
+  maxActiveTabs?: number;
 }
 
 export interface navigateOpts {
@@ -30,65 +39,22 @@ export type triggerEvents =
   'select'
 ;
 
-export class Chrome {
-  private chrome: any;
-  private kill: Function;
-  private isBusy: boolean;
-  private isExpired: boolean;
+export class ChromeTab extends EventEmitter {
+  private tab: any;
+  private active: boolean;
 
-  public chromeBootOptions: chromeOptions;
-  public jobsComplete: number;
-  public port: number;
-
-  constructor(chromeBootOptions: chromeOptions = {}) {
-    this.isBusy = false;
-    this.isExpired = false;
-    this.jobsComplete = 0;
-    this.chromeBootOptions ={
-      headless: true,
-      disableGpu: true,
-      hideScrollbars: true,
-      ...chromeBootOptions,
-    };
-  }
-
-  public async launch(): Promise<void> {
-    const chromeFlags = _.chain(this.chromeBootOptions)
-      .pickBy((value) => value)
-      .map((_value, key) => `--${_.kebabCase(key)}`)
-      .value();
-
-    log(`launching with args ${chromeFlags.join(' ')}`);
-
-    // Boot Chrome
-    const browser = await chromeLauncher.launch({ chromeFlags });
-
-    this.port = browser.port;
-    this.kill = browser.kill;
-
-    const cdp = await CDP({ port: browser.port });
-
-    // Enable all the crazy domains
-    await Promise.all([
-      cdp.Page.enable(),
-      cdp.Runtime.enable(),
-      cdp.Network.enable(),
-      cdp.DOM.enable(),
-      cdp.CSS.enable(),
-    ]);
-
-    log(`launched on port ${this.port}`);
-
-    this.chrome = cdp;
+  constructor(tab: any) {
+    super();
+    this.active = true;
+    this.tab = tab;
   }
 
   public async navigate(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
     log(`navigating to ${url}`);
-    this.isBusy = true;
-    await this.chrome.Page.navigate({ url });
+    await this.tab.Page.navigate({ url });
 
     if (opts.onload) {
-      await this.chrome.Page.loadEventFired();
+      await this.tab.Page.loadEventFired();
       return;
     }
 
@@ -96,22 +62,19 @@ export class Chrome {
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
-    this.isBusy = true;
-
     const stringifiedArgs = args.map((arg) => JSON.stringify(arg)).join(',');
     const script = `(${expression.toString()})(${stringifiedArgs})`;
     
     log(`executing script: ${script}`);
     
-    return this.chrome.Runtime.evaluate({ expression: script, returnValue: true });
+    return this.tab.Runtime.evaluate({ expression: script, returnValue: true });
   }
 
   private async getSelectorId(selector: string): Promise<number | null> {
     log(`getting selector '${selector}'`);
-    this.isBusy = true;
-    const document = await this.chrome.DOM.getDocument();
+    const document = await this.tab.DOM.getDocument();
 
-    const { nodeId } = await this.chrome.DOM.querySelector({
+    const { nodeId } = await this.tab.DOM.querySelector({
       nodeId: document.root.nodeId,
       selector,
     });
@@ -124,9 +87,8 @@ export class Chrome {
       throw new Error(`Filepath is not absolute: ${filePath}`);
     }
     log(`capturing screenshot ${filePath}`);
-    this.isBusy = true;
 
-    const base64Image = await this.chrome.Page.captureScreenshot();
+    const base64Image = await this.tab.Page.captureScreenshot();
     const buffer = new Buffer(base64Image.data, 'base64');
 
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
@@ -137,9 +99,8 @@ export class Chrome {
       throw new Error(`Filepath is not absolute: ${filePath}`);
     }
     log(`capturing PDF ${filePath}`);
-    this.isBusy = true;
 
-    const base64Image = await this.chrome.Page.printToPDF();
+    const base64Image = await this.tab.Page.printToPDF();
     const buffer = new Buffer(base64Image.data, 'base64');
 
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
@@ -147,21 +108,18 @@ export class Chrome {
 
   public async setWindowSize(width:number, height:number): Promise<any> {
     log(`setting window size ${width}x${height}`);
-    this.isBusy = true;
 
-    return this.chrome.Emulation.setVisibleSize({ width: width, height: height });
+    return this.tab.Emulation.setVisibleSize({ width: width, height: height });
   }
 
   public async exists(selector: string): Promise<boolean> {
     log(`checking if '${selector}' exists`);
-    this.isBusy = true;
     
     return !!await this.getSelectorId(selector);
   }
 
   public async getHTML(selector: string): Promise<string | null> {
     log(`getting '${selector}' HTML`);
-    this.isBusy = true;
 
     const nodeId = await this.getSelectorId(selector);
 
@@ -169,14 +127,13 @@ export class Chrome {
       return null;
     }
 
-    const { outerHTML } = await this.chrome.DOM.getOuterHTML({ nodeId });
+    const { outerHTML } = await this.tab.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
   }
 
   public async trigger(eventName: triggerEvents, selector: string): Promise<any> {
     log(`triggering '${eventName}' on '${selector}'`);
-    this.isBusy = true;
     let eventClass = '';
 
     switch (eventName) {
@@ -218,13 +175,108 @@ export class Chrome {
   }
 
   public done(): void {
-    log(`cleaning up chrome`);
-    this.isBusy = false;
-    this.jobsComplete++;
+    if (this.active) {
+      log(`clearing tab`);
+      this.active = false;
+      this.tab = null;
+      this.emit(events.done);
+    }
+  }
+}
+
+export class Chrome {
+  private chrome: any;
+  private host: any;
+  private isExpired: boolean;
+  private activeTabs: number;
+  private maxActiveTabs: number;
+  private browserStarted: boolean;
+  private kill: Function;
+
+  public chromeBootOptions: chromeOptions;
+  public jobsComplete: number;
+  public port: number;
+
+  constructor(chromeBootOptions: chromeOptions = {}, customOptions: customOptions = {}) {
+    this.isExpired = false;
+    this.jobsComplete = 0;
+    this.activeTabs = 0;
+    this.maxActiveTabs = customOptions.maxActiveTabs || -1;
+    this.chromeBootOptions ={
+      headless: true,
+      disableGpu: true,
+      hideScrollbars: true,
+      ...chromeBootOptions,
+    };
+  }
+
+  public async launch(): Promise<ChromeTab> {
+    // Want to remain idempotent
+    if (this.browserStarted) {
+      return this.getNewTab();
+    }
+
+    this.browserStarted = true;
+
+    const chromeFlags = _.chain(this.chromeBootOptions)
+      .pickBy((value) => value)
+      .map((_value, key) => `--${_.kebabCase(key)}`)
+      .value();
+
+    log(`launching with args ${chromeFlags.join(' ')}`);
+
+    // Boot Chrome
+    const browser = await chromeLauncher.launch({ chromeFlags });
+    const cdp = await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` });
+
+    log(`launched on port ${browser.port}`);
+
+    this.kill = browser.kill;
+    this.host = cdp;
+    this.chrome = cdp;
+    this.port = browser.port;
+
+    return this.launch();
+  }
+
+  public async getNewTab() {
+    const { browserContextId } = await this.host.Target.createBrowserContext();
+
+    log(`creating new tab at ${browserContextId}`);
+
+    const { targetId } = await this.host.Target.createTarget({
+      url: 'about:blank',
+      browserContextId
+    });
+
+    // connct to the new context
+    const newTab = await CDP({ tab: `ws://localhost:${this.port}/devtools/page/${targetId}` });
+
+    // Enable all the crazy domains
+    await Promise.all([
+      newTab.Page.enable(),
+      newTab.Runtime.enable(),
+      newTab.Network.enable(),
+      newTab.DOM.enable(),
+      newTab.CSS.enable(),
+    ]);
+
+    const tab = new ChromeTab(newTab);
+
+    tab.on(events.done, this.onTabClose);
+
+    this.activeTabs++;
+    return tab;
+  }
+
+  public onTabClose(): void {
+    log(`tab closed`);
+    this.activeTabs--;
   }
 
   public async destroy(): Promise<void> {
     log(`killing instance`);
+    this.activeTabs = 0;
     await this.chrome.close();
     return this.kill();
   }
@@ -235,7 +287,11 @@ export class Chrome {
   }
 
   public getIsBusy(): boolean {
-    return this.isBusy;
+    const isBusy:boolean = this.maxActiveTabs === this.activeTabs;
+
+    log(`instance ${isBusy ? 'still has' : 'has no'} capacity`);
+
+    return isBusy;
   }
 
   public getIsExpired(): boolean {

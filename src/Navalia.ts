@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as debug from 'debug';
-import { Chrome, chromeOptions } from './Chrome';
+import { Chrome, chromeOptions, ChromeTab } from './Chrome';
 
 const log = debug('navalia');
 
@@ -12,7 +12,7 @@ export interface clusterParams {
 }
 
 export interface jobFunc {
-  (chrome: Chrome): Promise<any>;
+  (chromeTab: ChromeTab): Promise<any>;
 }
 
 const isBusy = (chrome: Chrome): boolean => chrome.getIsBusy();
@@ -68,11 +68,13 @@ export class Navalia {
     }
     log(`instance ${chrome.port} is starting work`);
 
-    await job(chrome);
+    const tab = await chrome.getNewTab();
+
+    await job(tab);
 
     log(`instance ${chrome.port} has completed work`);
 
-    chrome.done();
+    tab.done();
 
     if (chrome.getIsExpired()) {
       log(`instance ${chrome.port} is expired and is closing`);
