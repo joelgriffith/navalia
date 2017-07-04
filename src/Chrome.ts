@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import * as chromeLauncher from 'lighthouse/chrome-launcher/chrome-launcher';
+import * as chromeLauncher from 'chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
 import * as path from 'path';
 import * as debug from 'debug';
@@ -226,7 +226,7 @@ export class Chrome {
   public async destroy(): Promise<void> {
     log(`killing instance`);
     await this.chrome.close();
-    this.kill();
+    return this.kill();
   }
 
   public setExpired(): void {
