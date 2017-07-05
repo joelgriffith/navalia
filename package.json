@@ -1,6 +1,6 @@
 {
   "name": "navalia",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A browser automation manager with a consistent API",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -8,7 +8,8 @@
     "clean": "rimraf build",
     "prepublish": "npm run build",
     "test": "jest",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "start": "ts-node .no-git/temp"
   },
   "keywords": [
     "chrome",
@@ -30,9 +31,9 @@
     "typescript": "^2.4.1"
   },
   "dependencies": {
+    "chrome-launcher": "^0.3.0",
     "chrome-remote-interface": "^0.23.3",
     "debug": "^2.6.8",
-    "lighthouse": "^2.1.0",
     "lodash": "^4.17.4",
     "ts-node": "^3.1.0"
   },

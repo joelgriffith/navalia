@@ -1,6 +1,8 @@
 import * as os from 'os';
 import * as debug from 'debug';
+
 import { Chrome, chromeOptions } from './Chrome';
+import { ChromeTab } from './ChromeTab';
 
 const log = debug('navalia');
 
@@ -12,7 +14,7 @@ export interface clusterParams {
 }
 
 export interface jobFunc {
-  (chrome: Chrome): Promise<any>;
+  (chromeTab: ChromeTab): Promise<any>;
 }
 
 const isBusy = (chrome: Chrome): boolean => chrome.getIsBusy();
@@ -51,7 +53,7 @@ export class Navalia {
     }
 
     // Destroy chrome instance
-    chrome.destroy();
+    chrome.quit();
 
     // Remove it from the instances collection
     this.chromeInstances.splice(instanceIndex, 1);
@@ -68,11 +70,13 @@ export class Navalia {
     }
     log(`instance ${chrome.port} is starting work`);
 
-    await job(chrome);
+    const tab = await chrome.start();
+
+    await job(tab);
 
     log(`instance ${chrome.port} has completed work`);
 
-    chrome.done();
+    tab.done();
 
     if (chrome.getIsExpired()) {
       log(`instance ${chrome.port} is expired and is closing`);
@@ -94,7 +98,7 @@ export class Navalia {
     log(`instance ${chrome.port} is idle`);
   }
 
-  public async startup(): Promise<void> {
+  public async start(): Promise<void> {
     const startupPromise: Promise<Chrome>[] = [];
 
     log(`launching ${this.numInstances} instances`)
@@ -108,7 +112,7 @@ export class Navalia {
 
   public async launchInstance(chromeOptions: chromeOptions): Promise<any> {
     const chrome = new Chrome(chromeOptions);
-    await chrome.launch();
+    await chrome.start();
     log(`instance ${chrome.port} is captured`);
 
     this.chromeInstances.push(chrome);
