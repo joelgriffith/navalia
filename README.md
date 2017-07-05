@@ -5,7 +5,9 @@
 
 `npm install --save navalia`
 
-Automate and scale browser workflows with a sane API. Navalia exports a handy `Navalia` module that acts as browser-load balancer, as well as a `Chrome` module that you can consume for scripting or CI purposes.
+Automate and scale browser workflows with a sane API. Navalia exports a handy `Navalia` module that acts as browser-load balancer, as well as a `Chrome` module that you can use for an easier scripting experience.
+
+**BETA WARNING** This project is still early in it's lifespan so breaking changes _will_ happen until we land on a minor release. 
 
 ## Features
 
