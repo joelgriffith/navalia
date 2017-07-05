@@ -1,6 +1,8 @@
 import * as os from 'os';
 import * as debug from 'debug';
-import { Chrome, chromeOptions, ChromeTab } from './Chrome';
+
+import { Chrome, chromeOptions } from './Chrome';
+import { ChromeTab } from './ChromeTab';
 
 const log = debug('navalia');
 
