@@ -221,7 +221,7 @@ Navalia prints nearly every interaction by using the module `debug`. To get debu
 
 ```bash
 # Log all messages. Omit `navalia` or `chrome` to filter out messages
-$ DEBUG=navalia,chrome node index.js
+$ DEBUG=navalia,navalia:chrome,navalia:chrome-tab node index.js
 ```
 
 ## Roadmap
