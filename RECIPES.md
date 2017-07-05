@@ -4,7 +4,7 @@ Below is a list of common web tasks in Navalia. These are used for illustration 
 
 - [Screenshot a website](#screenshot)
 - [Save a website to PDF](#pdf)
-- [Click a button](#events)
+- [Click a button](#click)
 - [See if an element exists](#exists)
 - [Run arbitrary javascript](#evaluate)
 
@@ -16,11 +16,13 @@ Use the `Chrome` constructor to navigate to a page and screenshot it locally (Us
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
-chrome.launch().then(() => {
-  return chrome.navigate('http://www.reddit.com/')
-    .then(() => chrome.screenShot('/Users/jgriffith/Downloads/google.png'))
-    .then(() => chrome.done());
-});
+chrome
+  .start()
+  .then((tab) => 
+    tab.navigate('http://www.reddit.com/')
+      .then(() => tab.screenshot('/Users/jgriffith/Downloads/google.png'))
+      .then(() => tab.done())
+  );
 ```
 
 ## PDF
@@ -32,16 +34,16 @@ const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
 async function savePDF() {
-  await chrome.launch();
-  await chrome.navigate('http://www.medium.com/');
-  await chrome.pdf('/Users/jgriffith/Downloads/medium.pdf');
-  return chrome.done();
+  const tab = await chrome.start();
+  await tab.navigate('http://www.medium.com/');
+  await tab.pdf('/Users/jgriffith/Downloads/medium.pdf');
+  return tab.done();
 }
 
 savePDF();
 ```
 
-## Events
+## Click
 
 Use the `Chrome` constructor to load a page and click a link (Using TypeScript);
 
@@ -51,10 +53,10 @@ import { Chrome } from 'navalia';
 const chrome: Chrome = new Chrome();
 
 async function clickAThing(): Promise<any> {
-  await chrome.launch();
-  await chrome.navigate('http://news.ycombinator.com');
-  await chrome.trigger('click', '.athing');
-  return chrome.done();
+  const tab = await chrome.start();
+  await tab.navigate('http://news.ycombinator.com');
+  await tab.click('.athing');
+  return tab.done();
 }
 
 clickAThing();
@@ -68,17 +70,20 @@ Use the `Chrome` constructor to navigate to a page and see if an element exists 
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
-chrome.launch().then(() => {
-  return chrome.navigate('http://www.reddit.com/')
-    .then(() => chrome.exists('button.buy-now'))
-    .then((exists) => {
-      if (!exists) {
-        throw new Error('Can\'t find buy-it-now button!');
-      }
-      return console.log('Its still there!');
-    })
-    .then(() => chrome.done());
-});
+chrome
+  .start()
+  .then((tab) => 
+    tab.navigate('http://www.reddit.com/')
+      .then(() => tab.exists('button.buy-now'))
+      .then((exists) => {
+        if (!exists) {
+          throw new Error('Can\'t find buy-it-now button!');
+        }
+        return console.log('Its still there!');
+      })
+      .then(() => tab.done())
+      .catch(() => tab.done());
+);
 ```
 
 ## Evaluate
@@ -91,9 +96,9 @@ const chrome = new Chrome();
 const buyButton = 'button.buy-now';
 
 async function getTitle() {
-  await chrome.launch();
-  await chrome.navigate('http://www.reddit.com/');
-  const res = await chrome.evaluate((selector) => {
+  const tab = await chrome.start();
+  await tab.navigate('http://www.reddit.com/');
+  const res = await tab.evaluate((selector) => {
     return document.querySelector(selector);
   }, buyButton);
   console.log(res);

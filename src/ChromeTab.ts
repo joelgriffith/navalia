@@ -173,7 +173,7 @@ export class ChromeTab extends EventEmitter {
     return this.trigger('focus', selector);
   }
 
-  public async type(selector:string, value:string) {
+  public async type(selector:string, value:string): Promise<void> {
     log(`typing'${value}' into '${selector}'`);
     return this.evaluate((selector, value) => {
       var element = document.querySelector(selector);
@@ -213,7 +213,7 @@ export class ChromeTab extends EventEmitter {
     }, selector);
   }
 
-  public async visible(selector: string): Promise<void> {
+  public async visible(selector: string): Promise<boolean> {
     log(`seeing if '${selector}' is visible`);
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);

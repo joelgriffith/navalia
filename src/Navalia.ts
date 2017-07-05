@@ -98,7 +98,7 @@ export class Navalia {
     log(`instance ${chrome.port} is idle`);
   }
 
-  public async startup(): Promise<void> {
+  public async start(): Promise<void> {
     const startupPromise: Promise<Chrome>[] = [];
 
     log(`launching ${this.numInstances} instances`)
