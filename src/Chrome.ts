@@ -21,7 +21,8 @@ export class Chrome {
   private isExpired: boolean;
   private activeTabs: number;
   private maxActiveTabs: number;
-  private browserStarted: boolean;
+  private browserHasStarted: boolean;
+  private browserStartingPromise: Promise<any> | boolean;
   private kill: Function;
 
   public chromeBootOptions: chromeOptions;
@@ -30,6 +31,8 @@ export class Chrome {
 
   constructor(chromeBootOptions: chromeOptions = {}, customOptions: customOptions = {}) {
     this.isExpired = false;
+    this.browserStartingPromise = false;
+    this.browserHasStarted = false;
     this.jobsComplete = 0;
     this.activeTabs = 0;
     this.maxActiveTabs = customOptions.maxActiveTabs || -1;
@@ -41,14 +44,40 @@ export class Chrome {
     };
   }
 
-  public async launch(): Promise<ChromeTab> {
-    // Want to remain idempotent
-    if (this.browserStarted) {
-      return this.getNewTab();
-    }
+  private async getNewTab() {
+    const { browserContextId } = await this.host.Target.createBrowserContext();
 
-    this.browserStarted = true;
+    log(`creating new tab at ${browserContextId}`);
 
+    const { targetId } = await this.host.Target.createTarget({
+      url: 'about:blank',
+      browserContextId
+    });
+
+    // connct to the new context
+    const newTab = await CDP({ tab: `ws://localhost:${this.port}/devtools/page/${targetId}` });
+
+    // Enable all the domains
+    await Promise.all([
+      newTab.Page.enable(),
+      newTab.Runtime.enable(),
+      newTab.Network.enable(),
+      newTab.DOM.enable(),
+      newTab.CSS.enable(),
+    ]);
+
+    const tab = new ChromeTab(newTab, targetId);
+
+    // Fire an event when we're closed so Navalia
+    // can do cleanup
+    tab.on(events.done, this.onTabClose.bind(this));
+
+    this.activeTabs++;
+
+    return tab;
+  }
+
+  private async bootChrome() {
     const chromeFlags = _.chain(this.chromeBootOptions)
       .pickBy((value) => value)
       .map((_value, key) => `--${_.kebabCase(key)}`)
@@ -66,38 +95,30 @@ export class Chrome {
     this.host = cdp;
     this.chrome = cdp;
     this.port = browser.port;
-
-    return this.launch();
+    this.browserHasStarted = true;
+    this.browserStartingPromise = false;
   }
 
-  public async getNewTab() {
-    const { browserContextId } = await this.host.Target.createBrowserContext();
+  public async start(): Promise<ChromeTab> {
+    // If browser has already started, return a fresh instance
+    if (this.browserHasStarted) {
+      return this.getNewTab();
+    }
 
-    log(`creating new tab at ${browserContextId}`);
+    // If the browser is still starting, wait for it's completion
+    // then return a new tab
+    if (this.browserStartingPromise) {
+      await this.browserStartingPromise;
+      return this.getNewTab();
+    }
 
-    const { targetId } = await this.host.Target.createTarget({
-      url: 'about:blank',
-      browserContextId
-    });
+    // Browser hasn't started, so boot it and cache the promise
+    // so this method can be idempotent to consumers
+    this.browserStartingPromise = this.bootChrome();
 
-    // connct to the new context
-    const newTab = await CDP({ tab: `ws://localhost:${this.port}/devtools/page/${targetId}` });
+    await this.browserStartingPromise;
 
-    // Enable all the crazy domains
-    await Promise.all([
-      newTab.Page.enable(),
-      newTab.Runtime.enable(),
-      newTab.Network.enable(),
-      newTab.DOM.enable(),
-      newTab.CSS.enable(),
-    ]);
-
-    const tab = new ChromeTab(newTab, targetId);
-
-    tab.on(events.done, this.onTabClose.bind(this));
-
-    this.activeTabs++;
-    return tab;
+    return this.getNewTab();
   }
 
   public onTabClose(targetId: string): void {
@@ -106,7 +127,7 @@ export class Chrome {
     this.activeTabs--;
   }
 
-  public async destroy(): Promise<void> {
+  public async quit(): Promise<void> {
     log(`killing instance`);
     this.activeTabs = 0;
     await this.chrome.close();

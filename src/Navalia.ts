@@ -53,7 +53,7 @@ export class Navalia {
     }
 
     // Destroy chrome instance
-    chrome.destroy();
+    chrome.quit();
 
     // Remove it from the instances collection
     this.chromeInstances.splice(instanceIndex, 1);
@@ -70,7 +70,7 @@ export class Navalia {
     }
     log(`instance ${chrome.port} is starting work`);
 
-    const tab = await chrome.getNewTab();
+    const tab = await chrome.start();
 
     await job(tab);
 
@@ -112,7 +112,7 @@ export class Navalia {
 
   public async launchInstance(chromeOptions: chromeOptions): Promise<any> {
     const chrome = new Chrome(chromeOptions);
-    await chrome.launch();
+    await chrome.start();
     log(`instance ${chrome.port} is captured`);
 
     this.chromeInstances.push(chrome);

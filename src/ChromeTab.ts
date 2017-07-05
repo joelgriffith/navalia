@@ -41,7 +41,6 @@ export class ChromeTab extends EventEmitter {
   }
 
   private async getSelectorId(selector: string): Promise<number | null> {
-    log(`getting selector '${selector}'`);
     const document = await this.tab.DOM.getDocument();
 
     const { nodeId } = await this.tab.DOM.querySelector({
@@ -53,7 +52,6 @@ export class ChromeTab extends EventEmitter {
   }
 
   private async trigger(eventName: triggerEvents, selector: string): Promise<any> {
-    log(`triggering '${eventName}' on '${selector}'`);
     let eventClass = '';
 
     switch (eventName) {
@@ -166,14 +164,17 @@ export class ChromeTab extends EventEmitter {
   }
 
   public async click(selector: string): Promise<void> {
+    log(`clicking '${selector}'`);
     return this.trigger('click', selector);
   }
 
   public async focus(selector: string): Promise<void> {
+    log(`focusing '${selector}'`);
     return this.trigger('focus', selector);
   }
 
   public async type(selector:string, value:string) {
+    log(`typing'${value}' into '${selector}'`);
     return this.evaluate((selector, value) => {
       var element = document.querySelector(selector);
       if (element) {
@@ -183,6 +184,7 @@ export class ChromeTab extends EventEmitter {
   }
 
   public async check(selector:string): Promise<void> {
+    log(`checking checkbox '${selector}'`);
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
       if (element) {
@@ -192,6 +194,7 @@ export class ChromeTab extends EventEmitter {
   }
 
   public async uncheck(selector:string): Promise<void> {
+    log(`un-checking checkbox '${selector}'`);
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
       if (element) {
@@ -201,6 +204,7 @@ export class ChromeTab extends EventEmitter {
   }
 
   public async select(selector: string, option:string): Promise<void> {
+    log(`selecting option '${option}' in '${selector}'`);
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
       if (element) {
@@ -210,6 +214,7 @@ export class ChromeTab extends EventEmitter {
   }
 
   public async visible(selector: string): Promise<void> {
+    log(`seeing if '${selector}' is visible`);
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
       if (element) {
@@ -217,6 +222,13 @@ export class ChromeTab extends EventEmitter {
       }
       else return false;
     }, selector);
+  }
+
+  public async wait(time: number): Promise<object> {
+    log(`waiting ${time} ms`);
+   return new Promise((resolve) => { 
+       setTimeout(() => resolve(), time);
+   });
   }
 
   public done(): void {
