@@ -1,4 +1,3 @@
-import * as os from 'os';
 import * as debug from 'debug';
 
 import { Chrome, chromeOptions } from './Chrome';
@@ -30,7 +29,7 @@ export class Navalia {
   defaultChromeOptions: chromeOptions;
 
   constructor(opts: clusterParams = {}) {
-    this.numInstances = opts.numInstances || os.cpus().length;
+    this.numInstances = opts.numInstances || 1;
     this.maxJobs = opts.maxJobs || -1;
     this.workerTTL = opts.workerTTL || -1;
     this.defaultChromeOptions = opts.chromeOptions || {};
@@ -98,19 +97,7 @@ export class Navalia {
     log(`instance ${chrome.port} is idle`);
   }
 
-  public async start(): Promise<void> {
-    const startupPromise: Promise<Chrome>[] = [];
-
-    log(`launching ${this.numInstances} instances`)
-
-    for (let i = 0; i < this.numInstances; i++) {
-      startupPromise.push(this.launchInstance(this.defaultChromeOptions));
-    }
-
-    return Promise.all(startupPromise).then(() => log(`is online and ready`));
-  }
-
-  public async launchInstance(chromeOptions: chromeOptions): Promise<any> {
+  private async launchInstance(chromeOptions: chromeOptions): Promise<any> {
     const chrome = new Chrome(chromeOptions);
     await chrome.start();
     log(`instance ${chrome.port} is captured`);
@@ -129,6 +116,18 @@ export class Navalia {
     }
 
     return chrome;
+  }
+
+  public async start(): Promise<void> {
+    const startupPromise: Promise<Chrome>[] = [];
+
+    log(`launching ${this.numInstances} instances`)
+
+    for (let i = 0; i < this.numInstances; i++) {
+      startupPromise.push(this.launchInstance(this.defaultChromeOptions));
+    }
+
+    return Promise.all(startupPromise).then(() => log(`is online and ready`));
   }
 
   public register(job: jobFunc): void {
