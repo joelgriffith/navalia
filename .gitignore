@@ -7,3 +7,7 @@ build/
 
 # Temp files
 *.log
+
+# Caches
+.sass-cache
+_site
