@@ -47,11 +47,11 @@ export const launch = async(flags: flags, isHost: boolean = false): Promise<chro
     await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` }) :
     await CDP({ port: browser.port });
 
-  const domains = isHost ?
-    [] :
-    [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(),cdp.CSS.enable() ];
-
-  await Promise.all(domains);
+  await Promise.all(
+    isHost ?
+      [] :
+      [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(),cdp.CSS.enable() ]
+  );
 
   // Return both the browser and the CDP instance
   return {

@@ -6,10 +6,10 @@ import { ChromeHelper, options as chromeOptions } from './util/ChromeHelper';
 const log = debug('navalia');
 
 export interface clusterParams {
-  numInstances?: number
-  maxJobs?: number
-  workerTTL?: number
-  chromeOptions?: chromeOptions
+  numInstances?: number;
+  maxJobs?: number;
+  workerTTL?: number;
+  chromeOptions?: chromeOptions;
 }
 
 export interface jobFunc {
@@ -36,7 +36,7 @@ export class Navalia {
     this.chromeInstances = [];
     this.queueList = [];
 
-    log(`launching ${this.numInstances} instances`)
+    log(`starting, using up to ${this.numInstances} instances`);
 
     for (let i = 0; i < this.numInstances; i++) {
       this.launchInstance(this.chromeOptions);
@@ -81,9 +81,9 @@ export class Navalia {
 
     await job(tab);
 
-    log(`instance ${chrome.port} has completed work`);
-
     tab.done();
+
+    log(`instance ${chrome.port} has completed work`);
 
     if (chrome.isFull()) {
       log(`instance ${chrome.port} at max capacity, not taking work from queue`);
@@ -107,8 +107,6 @@ export class Navalia {
       log(`instance ${chrome.port} is taking work from the queue`);
       return this.execute(chrome, this.queueList.shift());
     }
-
-    log(`instance ${chrome.port} is idle`);
   }
 
   private async launchInstance(chromeOptions: chromeOptions): Promise<void> {
