@@ -4,12 +4,13 @@ category: Chrome
 order: 1
 ---
 
-The `Chrome` module provides programatic access to an instance of Chrome, and uses `Targets` (you can think of incognito-tabs) for each execution. It doesn't do any work queueing, but instead offers a simple way to script against a live browser when you don't really need any work queueing.
+The `Chrome` module provides programatic access to an instance of Chrome, and implements the browser-api. It doesn't do any work queueing, but instead offers a simple way to script against a live browser.
+
+It's important to call `done` at the end of your script so that the browser exists and the process is freed. Otherwise the program will continue to be active.
 
 > You can view logs when the 'DEBUG' environment variable contains 'navalia:chrome' `DEBUG=navalia:chrome node my-script.js`
 
 - [Flags](#flags)
-- [Max Active Tabs](#maxactivetabs)
 
 ### flags
 
@@ -21,7 +22,7 @@ A [large list of options is published here](https://peter.sh/experiments/chromiu
 ```js
 const { Chrome } = require('navalia');
 
-// Translates to `chrome --disable-sync`
+// Translates to `chrome --disable-sync --headless`
 const chrome = new Chrome({
   flags: {
     headless: false,
@@ -34,35 +35,11 @@ const chrome = new Chrome({
 ```ts
 import { Chrome } from 'navalia';
 
-// Translates to `chrome --disable-sync`
+// Translates to `chrome --disable-sync --headless`
 const chrome:Chrome = new Chrome({
   flags: {
     headless: false,
     disableSync: true,
   },
-});
-```
-
-### maxActiveTabs
-
-The `maxActiveTabs` is a limit on the concurrent number of tabs that Chrome can execute against. When this limit is reached, an exception will be thrown when trying to execute more work than tabs available. You should check the `isBusy()` method prior to launching more work (Navalia does this for you automatically and will queue work based on this result).
-
-This defaults to `-1`, which indicicates that there is no limit on the number of concurrent tabs.
-
-*JavaScript*
-```js
-const { Chrome } = require('navalia');
-
-const chrome = new Chrome({
-  maxActiveTabs: 20,
-});
-```
-
-*TypeScript*
-```ts
-import { Chrome } from 'navalia';
-
-const chrome:Chrome = new Chrome({
-  maxActiveTabs: 20,
 });
 ```

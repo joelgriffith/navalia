@@ -22,8 +22,8 @@ type triggerEvents =
 ;
 
 export interface options {
-  flags: chromeUtil.flags,
-  cdp: chromeUtil.cdp | null,
+  flags?: chromeUtil.flags,
+  cdp?: chromeUtil.cdp,
 }
 
 export interface navigateOpts {
@@ -35,15 +35,15 @@ export const events = {
 };
 
 export class Chrome extends EventEmitter {
-  private cdp: chromeUtil.cdp | null;
-  private flags: chromeUtil.flags | null;
+  private cdp?: chromeUtil.cdp;
+  private flags?: chromeUtil.flags;
   private kill: () => Promise<{}>;
 
-  constructor(opts: options = { cdp: null, flags: chromeUtil.defaultFlags }) {
+  constructor(opts: options = {}) {
     super();
 
     this.cdp = opts.cdp;
-    this.flags = opts.flags;
+    this.flags = opts.flags || chromeUtil.defaultFlags;
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -141,7 +141,19 @@ export class Chrome extends EventEmitter {
     
     log(`executing script: ${script}`);
     
-    return cdp.Runtime.evaluate({ expression: script, returnValue: true });
+    const result = await cdp.Runtime.evaluate({ expression: script, returnByValue: true });
+
+    if (result) {
+      if (result.exceptionDetails) {
+        return new Error(result.exceptionDetails.exception.description);
+      }
+
+      if (result.result && result.result.value) {
+        return result.result.value;
+      }
+    }
+
+    return null;
   }
 
   public async screenshot(filePath: string): Promise<any> {
@@ -272,9 +284,21 @@ export class Chrome extends EventEmitter {
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
       if (element) {
+        let style;
+        try {
+          style = window.getComputedStyle(element);
+        } catch (e) {
+          return false;
+        }
+        if (style.visibility === 'hidden' || style.display === 'none') {
+          return false
+        }
+        if (style.display === 'inline' || style.display === 'inline-block') {
+          return true
+        }
         return (element.offsetWidth > 0 && element.offsetHeight > 0);
       }
-      else return false;
+      return false;
     }, selector);
   }
 

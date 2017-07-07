@@ -126,7 +126,7 @@ export class Navalia {
     }
   }
 
-  public register(job: jobFunc): void {
+  public run(job: jobFunc): void {
     if (!this.chromeInstances.length || this.chromeInstances.every(isBusy)) {
       log('queueing work as all instances are busy');
       this.queueList.push(job);
