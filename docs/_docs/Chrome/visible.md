@@ -22,8 +22,12 @@ chrome.goto('https://www.amazon.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.amazon.com');
-const isVisible = await chrome.visible('.buy-now');
-console.log(isVisible); // false
-chrome.done();
+async function visible() {
+  await chrome.goto('https://www.amazon.com');
+  const isVisible = await chrome.visible('.buy-now');
+  console.log(isVisible); // false
+  chrome.done();
+}
+
+visible();
 ```

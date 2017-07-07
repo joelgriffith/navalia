@@ -22,8 +22,12 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-const result = await chrome.exists('title');
-console.log(result); // true
-chrome.done();
+function exists() {
+  await chrome.goto('https://www.google.com');
+  const result = await chrome.exists('title');
+  console.log(result); // true
+  chrome.done();
+}
+
+exists();
 ```

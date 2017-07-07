@@ -21,7 +21,11 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-await chrome.check('input[type="checkbox"]');
-chrome.done();
+async function check() {
+  await chrome.goto('https://www.google.com');
+  await chrome.check('input[type="checkbox"]');
+  chrome.done();
+}
+
+check();
 ```

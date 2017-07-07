@@ -23,7 +23,11 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-await chrome.type('input[type="text"]', 'Navalia');
-chrome.done();
+async function type() {
+  await chrome.goto('https://www.google.com');
+  await chrome.type('input[type="text"]', 'Navalia');
+  chrome.done();
+}
+
+type();
 ```

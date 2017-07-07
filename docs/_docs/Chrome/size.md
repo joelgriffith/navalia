@@ -23,7 +23,11 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-await chrome.size(320, 960);
-chrome.done();
+async function size() {
+  await chrome.goto('https://www.google.com');
+  await chrome.size(320, 960);
+  chrome.done();
+}
+
+size();
 ```

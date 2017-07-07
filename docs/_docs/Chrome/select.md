@@ -21,7 +21,11 @@ chrome.goto('https://www.amazon.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.amazon.com');
-await chrome.select('.shipping', 'next-day');
-chrome.done();
+async function select() {
+  await chrome.goto('https://www.amazon.com');
+  await chrome.select('.shipping', 'next-day');
+  chrome.done();
+}
+
+select();
 ```

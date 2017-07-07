@@ -23,7 +23,11 @@ import { Chrome } from 'navalia';
 const chrome = new Chrome();
 const filepath = process.cwd() + 'google.png';
 
-await chrome.goto('https://www.google.com');
-await chrome.screenshot(filepath);
-chrome.done();
+async function screenshot() {
+  await chrome.goto('https://www.google.com');
+  await chrome.screenshot(filepath);
+  chrome.done();
+}
+
+screenshot();
 ```

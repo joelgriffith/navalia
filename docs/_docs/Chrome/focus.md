@@ -20,10 +20,14 @@ chrome.goto('https://www.google.com')
 
 *TypeScript*
 ```ts
-import { Chrome } from 'navalia';
-const chrome = new Chrome();
+async function focus() {
+  import { Chrome } from 'navalia';
+  const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-await chrome.focus('input[type="text"]');
-chrome.done();
+  await chrome.goto('https://www.google.com');
+  await chrome.focus('input[type="text"]');
+  chrome.done();
+}
+
+focus();
 ```

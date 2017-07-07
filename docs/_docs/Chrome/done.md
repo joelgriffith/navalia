@@ -20,6 +20,10 @@ chrome.goto('https://www.amazon.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.amazon.com');
-chrome.done();
+async function quit() {
+  await chrome.goto('https://www.amazon.com');
+  chrome.done();
+}
+
+quit();
 ```

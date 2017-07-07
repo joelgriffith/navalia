@@ -53,7 +53,11 @@ function getInnerText(selector):string {
   return document.querySelector(selector).text;
 }
 
-await chrome.goto('https://www.google.com');
-const res = await chrome.evaluate(getInnerText, 'title');
-console.log(res);  // Prints `https://www.google.com`
+async function evaluate() {
+  await chrome.goto('https://www.google.com');
+  const res = await chrome.evaluate(getInnerText, 'title');
+  console.log(res);  // Prints `https://www.google.com`
+}
+
+evaluate();
 ```

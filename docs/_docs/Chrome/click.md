@@ -21,7 +21,11 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-await chrome.goto('https://www.google.com');
-await chrome.click('input[type="button"]');
-chrome.done();
+async function click() {
+  await chrome.goto('https://www.google.com');
+  await chrome.click('input[type="button"]');
+  chrome.done();
+}
+
+click();
 ```

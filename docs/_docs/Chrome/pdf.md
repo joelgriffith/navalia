@@ -23,7 +23,11 @@ import { Chrome } from 'navalia';
 const chrome = new Chrome();
 const filepath = process.cwd() + 'google.pdf';
 
-await chrome.goto('https://www.google.com');
-await chrome.pdf(filepath);
-chrome.done();
+async function pdf() {
+  await chrome.goto('https://www.google.com');
+  await chrome.pdf(filepath);
+  chrome.done();
+}
+
+pdf();
 ```
