@@ -2,7 +2,6 @@ import * as _ from 'lodash';
 import * as chromeLauncher from 'chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
 
-// Need to flush these out at some point
 export interface flags {
   [propName: string]: boolean;
 }

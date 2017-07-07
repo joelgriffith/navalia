@@ -125,6 +125,7 @@ export class Chrome extends EventEmitter {
     await cdp.Page.navigate({ url });
 
     if (opts.onload) {
+      log(`waiting for pageload on ${url}`);
       await cdp.Page.loadEventFired();
       return;
     }
@@ -177,7 +178,7 @@ export class Chrome extends EventEmitter {
 
     log(`setting window size to ${width}x${height}`);
 
-    return cdp.Emulation.setVisibleSize({ width: width, height: height });
+    return cdp.Emulation.setVisibleSize({ width, height });
   }
 
   public async exists(selector: string): Promise<boolean> {
