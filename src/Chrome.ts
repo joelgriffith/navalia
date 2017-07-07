@@ -178,7 +178,14 @@ export class Chrome extends EventEmitter {
 
     log(`setting window size to ${width}x${height}`);
 
-    return cdp.Emulation.setVisibleSize({ width, height });
+    await cdp.Emulation.setVisibleSize({ width, height });
+    return cdp.Emulation.setDeviceMetricsOverride({
+      width,
+      height,
+      deviceScaleFactor: 0,
+      mobile: false,
+      fitWindow: true,
+    });
   }
 
   public async exists(selector: string): Promise<boolean> {
