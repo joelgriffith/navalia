@@ -9,7 +9,7 @@
     "prepublish": "npm run build",
     "test": "jest",
     "build": "npm run clean && tsc",
-    "start": "ts-node .no-git/temp",
+    "start": "ts-node",
     "docs": "cd docs && bundle exec jekyll serve"
   },
   "keywords": [
