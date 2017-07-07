@@ -27,8 +27,14 @@ export interface chromeInstance {
   cdp: any
 }
 
+export const defaultFlags:flags = {
+  headless: true,
+  disableGpu: true,
+  hideScrollbars: true,
+};
+
 // Contains all the business 
-export const launch = async(flags: flags): Promise<chromeInstance> => {
+export const launch = async(flags: flags, isHost: boolean = false): Promise<chromeInstance> => {
   const chromeFlags:string[] = _.chain(flags)
     .pickBy((value) => value)
     .map((_value, key) => `--${_.kebabCase(key)}`)
@@ -36,17 +42,17 @@ export const launch = async(flags: flags): Promise<chromeInstance> => {
 
   // Boot Chrome
   const browser:chromeLauncher.LaunchedChrome = await chromeLauncher.launch({ chromeFlags });
-  const cdp = await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` });
 
-  // Enable all the domains
-  await Promise.all([
-    cdp.Page.enable(),
-    cdp.Runtime.enable(),
-    cdp.Network.enable(),
-    cdp.DOM.enable(),
-    cdp.CSS.enable(),
-  ]);
-  
+  const cdp = isHost ? 
+    await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` }) :
+    await CDP({ port: browser.port });
+
+  const domains = isHost ?
+    [] :
+    [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(),cdp.CSS.enable() ];
+
+  await Promise.all(domains);
+
   // Return both the browser and the CDP instance
   return {
     browser,
@@ -54,18 +60,18 @@ export const launch = async(flags: flags): Promise<chromeInstance> => {
   }
 }
 
-export const createTab = async (cdp: cdp): Promise<tab> => {
+export const createTab = async (cdp: cdp, port:number): Promise<tab> => {
   const { browserContextId } = cdp.Target.createBrowserContext();
 
-  const { targetId } = await cdp.Target.Target.createTarget({
+  const { targetId } = await cdp.Target.createTarget({
     url: 'about:blank',
     browserContextId
   });
 
   // connct to the new context
-  const tab = await CDP({ tab: `ws://localhost:${this.port}/devtools/page/${targetId}` });
+  const tab = await CDP({ tab: `ws://localhost:${port}/devtools/page/${targetId}` });
 
-  // Enable all the domains
+  // Enable all the domains on the tab
   await Promise.all([
     tab.Page.enable(),
     tab.Runtime.enable(),

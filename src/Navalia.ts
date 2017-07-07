@@ -1,7 +1,7 @@
 import * as debug from 'debug';
 
 import { Chrome } from './Chrome';
-import { ChromeHelper } from './util/ChromeHelper';
+import { ChromeHelper, options as chromeOptions } from './util/ChromeHelper';
 
 const log = debug('navalia');
 
@@ -13,36 +13,44 @@ export interface clusterParams {
 }
 
 export interface jobFunc {
-  (chromeTab: ChromeTab): Promise<any>;
+  (chromeTab: Chrome): Promise<any>;
 }
 
-const isBusy = (chrome: Chrome): boolean => chrome.getIsBusy();
-const notBusy = (chrome: Chrome): boolean => !isBusy(chrome);
+const isBusy = (chrome: ChromeHelper): boolean => chrome.isFull();
+const notBusy = (chrome: ChromeHelper): boolean => !isBusy(chrome);
 
 export class Navalia {
-  private chromeInstances: Chrome[];
+  private chromeInstances: ChromeHelper[];
   private queueList: jobFunc[];
   private numInstances: number;
   private maxJobs: number;
   private workerTTL: number;
-  private defaultChromeOptions: chromeOptions;
+  private chromeOptions: chromeOptions;
 
   constructor(opts: clusterParams = {}) {
     this.numInstances = opts.numInstances || 1;
     this.maxJobs = opts.maxJobs || -1;
     this.workerTTL = opts.workerTTL || -1;
-    this.defaultChromeOptions = opts.chromeOptions || {};
+    this.chromeOptions = opts.chromeOptions || {};
 
     this.chromeInstances = [];
     this.queueList = [];
+
+    log(`launching ${this.numInstances} instances`)
+
+    for (let i = 0; i < this.numInstances; i++) {
+      this.launchInstance(this.chromeOptions);
+    }
+    
+    return;
   }
 
-  private destroy(chrome: Chrome): void {
+  private destroy(chrome: ChromeHelper): void {
     const instanceIndex = this.chromeInstances.indexOf(chrome);
 
-    if (chrome.getIsBusy()) {
+    if (!chrome.isIdle()) {
+      log(`instance ${chrome.port} still has active work, waiting till finished`);
       chrome.setExpired();
-      log(`instance ${chrome.port} is busy, marking for expiration when complete`);
       return;
     }
 
@@ -57,18 +65,19 @@ export class Navalia {
     this.chromeInstances.splice(instanceIndex, 1);
 
     // Launch a new on in its place
-    this.launchInstance(this.defaultChromeOptions);
+    this.launchInstance(this.chromeOptions);
 
     log(`instance ${chrome.port} successfully closed`);
   }
 
-  private async execute(chrome: Chrome | undefined, job: jobFunc | undefined): Promise<any> {
+  private async execute(chrome: ChromeHelper | undefined, job: jobFunc | undefined): Promise<any> {
     if (!chrome || !job) {
       throw new Error(`#execute was called with no instance of Chrome or a Job`);
     }
-    log(`instance ${chrome.port} is starting work`);
 
     const tab = await chrome.start();
+
+    log(`instance ${chrome.port} is starting work`);
 
     await job(tab);
 
@@ -76,13 +85,19 @@ export class Navalia {
 
     tab.done();
 
-    if (chrome.getIsExpired()) {
-      log(`instance ${chrome.port} is expired and is closing`);
+    if (chrome.isFull()) {
+      log(`instance ${chrome.port} at max capacity, not taking work from queue`);
       this.destroy(chrome);
       return;
     }
 
-    if (chrome.jobsComplete === this.maxJobs) {
+    if (chrome.getIsExpired()) {
+      log(`instance ${chrome.port} is expired and isn't taking new work`);
+      this.destroy(chrome);
+      return;
+    }
+
+    if (chrome.getJobsComplete() === this.maxJobs) {
       log(`instance ${chrome.port} has completed maximum jobs and is closing`);
       this.destroy(chrome);
       return;
@@ -96,37 +111,21 @@ export class Navalia {
     log(`instance ${chrome.port} is idle`);
   }
 
-  private async launchInstance(chromeOptions: chromeOptions): Promise<any> {
-    const chrome = new Chrome(chromeOptions);
-    await chrome.start();
-    log(`instance ${chrome.port} is captured`);
+  private async launchInstance(chromeOptions: chromeOptions): Promise<void> {
+    const chromeHelper = new ChromeHelper(chromeOptions);
 
-    this.chromeInstances.push(chrome);
+    this.chromeInstances.push(chromeHelper);
 
     if (this.queueList.length) {
-      this.execute(chrome, this.queueList.shift());
+      this.execute(chromeHelper, this.queueList.shift());
     }
 
     if (this.workerTTL > 0) {
       setTimeout(() => {
-        log(`instance ${chrome.port} has reached expiration`);
-        this.destroy(chrome);
+        log(`instance ${chromeHelper.port} has reached expiration`);
+        this.destroy(chromeHelper);
       }, this.workerTTL);
     }
-
-    return chrome;
-  }
-
-  public async start(): Promise<void> {
-    const startupPromise: Promise<Chrome>[] = [];
-
-    log(`launching ${this.numInstances} instances`)
-
-    for (let i = 0; i < this.numInstances; i++) {
-      startupPromise.push(this.launchInstance(this.defaultChromeOptions));
-    }
-
-    return Promise.all(startupPromise).then(() => log(`is online and ready`));
   }
 
   public register(job: jobFunc): void {

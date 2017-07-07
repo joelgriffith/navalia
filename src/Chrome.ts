@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as debug from 'debug';
-import * as chrome from './util/chrome';
+import * as chromeUtil from './util/chrome';
 
 const log = debug('navalia:chrome');
 
@@ -22,8 +22,8 @@ export type triggerEvents =
 ;
 
 export interface options {
-  flags: chrome.flags,
-  cdp: chrome.cdp,
+  flags: chromeUtil.flags,
+  cdp: chromeUtil.cdp | null,
 }
 
 export interface navigateOpts {
@@ -35,44 +35,43 @@ export const events = {
 };
 
 export class Chrome extends EventEmitter {
-  private cdp: chrome.cdp;
+  private cdp: chromeUtil.cdp | null;
+  private flags: chromeUtil.flags | null;
   private kill: () => Promise<{}>;
-  private flags: chrome.flags;
 
-  constructor(options) {
+  constructor(opts: options = { cdp: null, flags: chromeUtil.defaultFlags }) {
     super();
-    
-    if (options.cdp) {
-      this.cdp = options.cdp;
+
+    this.cdp = opts.cdp;
+    this.flags = opts.flags;
+  }
+
+  private async getChromeCDP(): Promise<chromeUtil.cdp> {
+    if (this.cdp) {
+      return this.cdp;
     }
 
-    if (options.flags) {
-      this.flags = options.flags;
-    }
+    log(`starting chrome`);
+
+    const { browser, cdp } = await chromeUtil.launch(this.flags || chromeUtil.defaultFlags);
+
+    this.kill = browser.kill;
+    this.cdp = cdp;
+
+    return cdp;
   }
 
   private async getSelectorId(selector: string): Promise<number | null> {
-    const document = await this.cdp.DOM.getDocument();
+    const cdp = await this.getChromeCDP();
 
-    const { nodeId } = await this.cdp.DOM.querySelector({
+    const document = await cdp.DOM.getDocument();
+
+    const { nodeId } = await cdp.DOM.querySelector({
       nodeId: document.root.nodeId,
       selector,
     });
 
     return nodeId;
-  }
-
-  private async boot(): Promise<void> {
-    if (this.cdp) {
-      return;
-    }
-    log(`starting chrome`);
-    const { browser, cdp } = await chrome.launch(this.flags);
-
-    this.kill = browser.kill;
-    this.cdp = cdp;
-
-    return;
   }
 
   private async trigger(eventName: triggerEvents, selector: string): Promise<any> {
@@ -116,15 +115,15 @@ export class Chrome extends EventEmitter {
     return this.evaluate(expression, selector, eventName, eventClass);
   }
 
-  public async navigate(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
-    await this.boot();
+  public async goto(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
+    const cdp = await this.getChromeCDP();
 
     log(`navigating to ${url}`);
 
-    await this.cdp.Page.navigate({ url });
+    await cdp.Page.navigate({ url });
 
     if (opts.onload) {
-      await this.cdp.Page.loadEventFired();
+      await cdp.Page.loadEventFired();
       return;
     }
 
@@ -132,42 +131,46 @@ export class Chrome extends EventEmitter {
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
+    const cdp = await this.getChromeCDP();
     const stringifiedArgs = args.map((arg) => JSON.stringify(arg)).join(',');
     const script = `(${expression.toString()})(${stringifiedArgs})`;
     
     log(`executing script: ${script}`);
     
-    return this.cdp.Runtime.evaluate({ expression: script, returnValue: true });
+    return cdp.Runtime.evaluate({ expression: script, returnValue: true });
   }
 
   public async screenshot(filePath: string): Promise<any> {
+    const cdp = await this.getChromeCDP();
     if (!path.isAbsolute(filePath)) {
       throw new Error(`Filepath is not absolute: ${filePath}`);
     }
     log(`capturing screenshot ${filePath}`);
 
-    const base64Image = await this.cdp.Page.captureScreenshot();
+    const base64Image = await cdp.Page.captureScreenshot();
     const buffer = new Buffer(base64Image.data, 'base64');
 
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
   }
 
   public async pdf(filePath: string): Promise<any> {
+    const cdp = await this.getChromeCDP();
     if (!path.isAbsolute(filePath)) {
       throw new Error(`Filepath is not absolute: ${filePath}`);
     }
     log(`capturing PDF ${filePath}`);
 
-    const base64Image = await this.cdp.Page.printToPDF();
+    const base64Image = await cdp.Page.printToPDF();
     const buffer = new Buffer(base64Image.data, 'base64');
 
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
   }
 
   public async size(width:number, height:number): Promise<any> {
+    const cdp = await this.getChromeCDP();
     log(`setting window size ${width}x${height}`);
 
-    return this.cdp.Emulation.setVisibleSize({ width: width, height: height });
+    return cdp.Emulation.setVisibleSize({ width: width, height: height });
   }
 
   public async exists(selector: string): Promise<boolean> {
@@ -177,6 +180,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async html(selector: string): Promise<string | null> {
+    const cdp = await this.getChromeCDP();
     log(`getting '${selector}' HTML`);
 
     const nodeId = await this.getSelectorId(selector);
@@ -185,7 +189,7 @@ export class Chrome extends EventEmitter {
       return null;
     }
 
-    const { outerHTML } = await this.cdp.DOM.getOuterHTML({ nodeId });
+    const { outerHTML } = await cdp.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
   }
