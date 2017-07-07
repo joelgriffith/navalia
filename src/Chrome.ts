@@ -135,9 +135,7 @@ export class Chrome extends EventEmitter {
 
   public async evaluate(expression: Function, ...args): Promise<any> {
     const cdp = await this.getChromeCDP();
-
-    const stringifiedArgs = args.map((arg) => JSON.stringify(arg)).join(',');
-    const script = `(${expression.toString()})(${stringifiedArgs})`;
+    const script = `(${String(expression)}).apply(null, ${JSON.stringify(args)})`;
     
     log(`executing script: ${script}`);
     

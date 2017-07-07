@@ -8,9 +8,9 @@ The `Chrome` module provides programatic access to an instance of Chrome, and im
 
 It's important to call `done` at the end of your script so that the browser exists and the process is freed. Otherwise the program will continue to be active.
 
-> You can view logs when the 'DEBUG' environment variable contains 'navalia:chrome' `DEBUG=navalia:chrome node my-script.js`
-
 - [Flags](#flags)
+
+> You can view the chrome logs by setting the DEBUG environment variable to contain 'navalia:chrome' > `DEBUG=navalia:chrome node my-script.js`
 
 ### flags
 
