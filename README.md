@@ -59,7 +59,7 @@ screenshotHN();
 
 ## More Examples
 
-Looking for more? [Check out the docs](RECIPES.md).
+Looking for more? [Check out the docs](https://joelgriffith.github.io/navalia/).
 
 ## Roadmap
 
