@@ -23,7 +23,7 @@ Automate and scale browser workflows with a sane API. Navalia exports a handy `N
 // Navalia manages browser instances
 // and can jobs can be queued against it
 const { Navalia } = require('Navalia');
-const navalia = new Navalia({ numInstances: 1 });
+const navalia = new Navalia();
 
 const snapshotFavPages = async() => {
   await navalia.start();
@@ -68,7 +68,7 @@ async function searchNavalia() {
   await tab.click('#search_button_homepage');
   await tab.wait(1500)
   await tab.screenshot('/Users/jgriffith/Downloads/ddg.png')
-  await tab.done();
+  return tab.done();
 }
 
 // Runs all work in parallel then closes Chrome

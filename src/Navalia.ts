@@ -1,7 +1,7 @@
 import * as debug from 'debug';
 
-import { Chrome, chromeOptions } from './Chrome';
-import { ChromeTab } from './ChromeTab';
+import { Chrome } from './Chrome';
+import { ChromeHelper } from './util/ChromeHelper';
 
 const log = debug('navalia');
 
@@ -22,11 +22,10 @@ const notBusy = (chrome: Chrome): boolean => !isBusy(chrome);
 export class Navalia {
   private chromeInstances: Chrome[];
   private queueList: jobFunc[];
-  numInstances: number;
-  maxJobs: number;
-  workerTTL: number;
-  verbose: boolean;
-  defaultChromeOptions: chromeOptions;
+  private numInstances: number;
+  private maxJobs: number;
+  private workerTTL: number;
+  private defaultChromeOptions: chromeOptions;
 
   constructor(opts: clusterParams = {}) {
     this.numInstances = opts.numInstances || 1;

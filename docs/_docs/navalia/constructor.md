@@ -6,6 +6,8 @@ order: 1
 
 The `Navalia` module is a high-level manager that is used to balance and queue jobs against a browser (currently only Chrome is supported). This document details the parameters you can use in constructing this module, which accepts a single argument: an object detailing the configuration.
 
+> You can view logs when the 'DEBUG' environment variable contains 'navalia' `DEBUG=navalia node my-script.js`
+
 - [Number of Instances](#numinstances)
 - [Max Jobs](#maxjobs)
 - [Worker time-to-live](#workerttl)
