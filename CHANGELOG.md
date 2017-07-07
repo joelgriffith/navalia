@@ -1,3 +1,16 @@
+# 0.0.10
+
+## Features
+- No need to call `start` on either `Chrome` or `Navalia` as they lazily begin execution.
+- New docs page at https://joelgriffith.github.io/navalia/
+- Tighter error handling inside the browser API when things go wrong.
+- Consolidated typings into a chrome-utility.
+
+## Breaking
+- `chrome.navigate` is now `chrome.goto`
+- `navalia.register` is now `navalia.run`
+- Both `chrome` and `navalia` no longer have `start` methods, just construct them and start using them.
+
 # 0.0.9
 
 ## Features

@@ -4,7 +4,11 @@ category: Navalia
 order: 1
 ---
 
-The `Navalia` module is a high-level manager that is used to balance and queue jobs against a browser (currently only Chrome is supported). This document details the parameters you can use in constructing this module, which accepts a single argument: an object detailing the configuration.
+The `Navalia` module is a high-level manager that is used to balance and queue jobs against a browser (currently only Chrome is supported). Similar to web frameworks, the `Navalia` module doesn't exit after all jobs are executed, but will hold onto the process until it's terminated manually (CTRL+C). This allows for jobs to be ran against it asyncronously.
+
+This document details the parameters you can use in constructing this module, which accepts a single argument: an object detailing the configuration.
+
+> You can view logs when the 'DEBUG' environment variable contains 'navalia' `DEBUG=navalia node my-script.js`
 
 - [Number of Instances](#numinstances)
 - [Max Jobs](#maxjobs)
@@ -79,7 +83,9 @@ const navalia:Navalia = new Navalia({
 
 ### chromeOptions
 
-The options to pass into each `Chrome` instance when started. These are translated into the flags you can pass when booting chrome from a command-line. A [large list of options is published here](https://peter.sh/experiments/chromium-command-line-switches/).
+The options to pass into each `Chrome` instance when started. This options object currently has two properties: `flags` and `maxActiveTabs`. A [large list of flag options is published here](https://peter.sh/experiments/chromium-command-line-switches/).
+
+The `maxActiveTabs` option restricts how many active tabs an instance of Chrome can utilize internally. Once that limit is reached, either another browser instance will begin working _or_ the work will be queued based upon `numInstances`.
 
 *JavaScript*
 ```js
@@ -87,7 +93,10 @@ const { Navalia } = require('navalia');
 
 const navalia = new Navalia({
   chromeOptions: {
-    disableSync: true,
+    maxActiveTabs: 10,
+    flags: {
+      disableSync: true,
+    },
   },
 });
 ```
@@ -98,7 +107,10 @@ import { Navalia, chromeOptions } from 'navalia';
 
 const navalia:Navalia = new Navalia({
   chromeOptions: {
-    disableSync: true,
+    maxActiveTabs: 10,
+    flags: {
+      disableSync: true,
+    },
   },
 });
 ```
