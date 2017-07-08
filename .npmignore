@@ -1,3 +1,5 @@
 src/
+docs/
+.vscode/
 .editorconfig
 .gitignore
