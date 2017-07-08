@@ -117,6 +117,12 @@ export class Chrome extends EventEmitter {
     return this.evaluate(expression, selector, eventName, eventClass);
   }
 
+  private async runScript(script: string): Promise<any> {
+    const cdp = await this.getChromeCDP();
+
+    return await cdp.Runtime.evaluate({ expression: script, returnByValue: true });
+  }
+
   public async goto(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
     const cdp = await this.getChromeCDP();
 
@@ -134,12 +140,11 @@ export class Chrome extends EventEmitter {
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
-    const cdp = await this.getChromeCDP();
     const script = `(${String(expression)}).apply(null, ${JSON.stringify(args)})`;
     
     log(`executing script: ${script}`);
     
-    const result = await cdp.Runtime.evaluate({ expression: script, returnByValue: true });
+    const result = await this.runScript(script);
 
     if (result) {
       if (result.exceptionDetails) {
@@ -306,6 +311,29 @@ export class Chrome extends EventEmitter {
     return new Promise((resolve) => { 
       setTimeout(() => resolve(), time);
     });
+  }
+
+  public async inject(src: string): Promise<boolean | Error> {
+    const fileContents = fs.readFileSync(src, { encoding: 'utf-8' });
+    const extension = path.extname(src);
+
+    if (extension === '.js') {
+      await this.runScript(fileContents);
+      return true;
+    }
+
+    if (extension === '.css') {
+      const cssInjectScript = function(content) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.innerHTML = content;
+        document.body.appendChild(link);
+      };
+      await this.evaluate(cssInjectScript, fileContents);
+      return true;
+    }
+
+    return new Error(`unknown extension type to inject: ${extension}`);
   }
 
   public done(): void {
