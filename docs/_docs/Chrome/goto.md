@@ -1,7 +1,6 @@
 ---
 title: .goto
 category: Chrome
-order: 2
 ---
 
 The async `goto` method navigates Chrome to a webpage. By default, it waits for the pageload event, but can be overriden. Below is an example of going to google.com.

@@ -1,7 +1,6 @@
 ---
 title: .evaluate
 category: Chrome
-order: 19
 ---
 
 The async `evaluate` method accepts a function, and an optional set of arguments, to run inside of the Chrome JavaScript evironment. It's important to highlight that any arguments or other references _must_ be passed in as an argument (things like closures won't work).

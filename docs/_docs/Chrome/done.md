@@ -1,7 +1,6 @@
 ---
 title: .done
 category: Chrome
-order: 20
 ---
 
 The `done` method cleans up chrome and exists the process. It accepts no arguments.

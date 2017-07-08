@@ -1,7 +1,6 @@
 ---
 title: .visible
 category: Chrome
-order: 13
 ---
 
 The `visible` method returns a boolean indiciating if an element is visible. It accepts a single argument: the css-style of the selector you want to check.

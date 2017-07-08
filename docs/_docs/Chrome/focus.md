@@ -1,7 +1,6 @@
 ---
 title: .focus
 category: Chrome
-order: 8
 ---
 
 The `focus` method focuses an element on the page. It accepts a css-style selector of the element you wish to focus.

@@ -1,7 +1,6 @@
 ---
 title: .click
 category: Chrome
-order: 8
 ---
 
 The `click` method clicks on an element in the page. It accepts a css-style selector for the element you want to click.

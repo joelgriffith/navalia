@@ -1,7 +1,6 @@
 ---
 title: .size
 category: Chrome
-order: 5
 ---
 
 The `size` method resizes the frame of the browser, and is suitable for capturing screenshots. For small screens, results are best if the site is responsive.

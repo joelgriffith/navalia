@@ -1,7 +1,6 @@
 ---
 title: .select
 category: Chrome
-order: 12
 ---
 
 The `select` method selects an option inside a dropdown selector. It accepts two arguments: the css-style selector of the dropdown you want to select, and the option you wish to select.

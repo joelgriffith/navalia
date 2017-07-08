@@ -1,7 +1,6 @@
 ---
 title: .exists
 category: Chrome
-order: 6
 ---
 
 The `exists` method returns if the Element selector exists on the page. Accepts a `string` of a css-style selector.

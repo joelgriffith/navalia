@@ -14,6 +14,7 @@ export interface cdp {
   CSS: any,
   Target: any,
   Emulation: any,
+  Profiler: any,
 }
 
 export interface tab {

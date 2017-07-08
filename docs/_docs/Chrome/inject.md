@@ -1,9 +1,11 @@
 ---
-title: .check
+title: .inject
 category: Chrome
 ---
 
-The `check` method checks a checkbox. It accepts a single argument: the css-style selector of the checkbox you want to check
+The `inject` method injects a JavaScript or CSS file into the page. It accpets a single-argument: a string of the filepath to inject.
+
+It will return a `boolean` indicating succes.
 
 *JavaScript*
 ```js
@@ -11,7 +13,7 @@ const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
 chrome.goto('https://www.google.com')
-.then(() => chrome.check('input[type="checkbox"]'))
+.then(() => chrome.inject('./my-cool-js.js'))
 .then(() => chrome.done());
 ```
 
@@ -20,11 +22,11 @@ chrome.goto('https://www.google.com')
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-async function check() {
+async function inject() {
   await chrome.goto('https://www.google.com');
-  await chrome.check('input[type="checkbox"]');
+  await chrome.inject('./my-cool-css.css');
   chrome.done();
 }
 
-check();
+inject();
 ```

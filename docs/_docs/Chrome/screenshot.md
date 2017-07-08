@@ -1,7 +1,6 @@
 ---
 title: .screenshot
 category: Chrome
-order: 3
 ---
 
 The `screenshot` method takes a single argument: a file-path (absolute) of where to save the screenshot. The output is always `.png`:
