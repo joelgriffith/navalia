@@ -1,7 +1,6 @@
 ---
 title: .pdf
 category: Chrome
-order: 4
 ---
 
 The `pdf` method takes a single argument: a file-path (absolute) of where to save the pdf.

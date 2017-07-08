@@ -1,7 +1,6 @@
 ---
 title: .wait
 category: Chrome
-order: 14
 ---
 
 The `wait` simple sleeps any further requests for a set amount of time before resuming execution. It accepts a single arugment: the time in `ms`.

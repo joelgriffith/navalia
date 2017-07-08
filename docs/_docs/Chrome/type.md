@@ -1,7 +1,6 @@
 ---
 title: .type
 category: Chrome
-order: 9
 ---
 
 The `type` method allows you to type text into an element. It accepts two arguments: the css-style selector of the element you want to enter text into, and a string of text to input.

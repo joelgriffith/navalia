@@ -1,7 +1,6 @@
 ---
 title: .uncheck
 category: Chrome
-order: 11
 ---
 
 The `uncheck` method un-checks a checkbox. It accepts a single argument: the css-style selector of the checkbox you want to un-check

@@ -1,7 +1,6 @@
 ---
 title: .check
 category: Chrome
-order: 10
 ---
 
 The `check` method checks a checkbox. It accepts a single argument: the css-style selector of the checkbox you want to check

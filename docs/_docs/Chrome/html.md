@@ -1,7 +1,6 @@
 ---
 title: .html
 category: Chrome
-order: 7
 ---
 
 The `html` method returns the string of HTML for a particular selector. It accepts one argument: a css-style selector for the element you wish to extract html from.
