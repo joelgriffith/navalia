@@ -1,3 +1,10 @@
+# 0.0.11
+
+## Features
+- New `coverage` method on browser-api. Automate runtime coverage in an easy way
+- New `inject` method to inject css or js into a page.
+- Lots of docs and visual updates.
+
 # 0.0.10
 
 ## Features
