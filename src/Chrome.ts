@@ -28,10 +28,16 @@ export interface options {
 
 export interface navigateOpts {
   onload?: boolean
+  coverage?: boolean
 }
 
 export const events = {
   done: 'done',
+};
+
+export const pageloadOpts = {
+  onload: true,
+  coverage: false,
 };
 
 export class Chrome extends EventEmitter {
@@ -123,17 +129,25 @@ export class Chrome extends EventEmitter {
     return await cdp.Runtime.evaluate({ expression: script, returnByValue: true });
   }
 
-  public async goto(url: string, opts: navigateOpts = { onload: true }): Promise<void> {
+  public async goto(url: string, opts: navigateOpts = pageloadOpts): Promise<void> {
     const cdp = await this.getChromeCDP();
+
+    const waitForPageload = opts.onload === undefined ? true : opts.onload;
+    const runCoverage = opts.coverage === undefined ? false : opts.coverage;
+
+    if (runCoverage) {
+      log(`gathering coverage for ${url}`);
+      await cdp.Profiler.enable();
+      await cdp.Profiler.startPreciseCoverage();
+    }
 
     log(`going to ${url}`);
 
     await cdp.Page.navigate({ url });
 
-    if (opts.onload) {
+    if (waitForPageload) {
       log(`waiting for pageload on ${url}`);
       await cdp.Page.loadEventFired();
-      return;
     }
 
     return;
@@ -334,6 +348,47 @@ export class Chrome extends EventEmitter {
     }
 
     return new Error(`unknown extension type to inject: ${extension}`);
+  }
+
+  public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
+    const cdp = await this.getChromeCDP();
+    const res = await cdp.Profiler.takePreciseCoverage();
+    await cdp.Profiler.stopPreciseCoverage();
+
+    const scriptCoverage = res.result.find((scriptCoverage) => scriptCoverage.url === src);
+
+    if (!scriptCoverage) {
+      return new Error(`Couldn't locat script ${src} on the page.`);
+    }
+
+    if (scriptCoverage && scriptCoverage.functions && scriptCoverage.functions.length) {
+      const coverageData = scriptCoverage.functions.reduce((fnAccum, coverageStats) => {
+        const functionStats = coverageStats.ranges.reduce((rangeAccum, range) => {
+          return {
+            total: range.endOffset > rangeAccum.total ? range.endOffset : rangeAccum.total,
+            unused: rangeAccum.unused + (range.count === 0 ? (range.endOffset - range.startOffset) : 0),
+          };
+        }, {
+          total: 0,
+          unused: 0,
+        });
+
+        return {
+          total: functionStats.total > fnAccum.total ? functionStats.total : fnAccum.total,
+          unused: fnAccum.unused + functionStats.unused,
+        };
+      }, {
+        total: 0,
+        unused: 0,
+      });
+      
+      return {
+        ...coverageData,
+        percentUnused: coverageData.unused / coverageData.total,
+      }
+    }
+
+    return new Error(`Couldn't parse code coverge for script ${src}`);
   }
 
   public done(): void {
