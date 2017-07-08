@@ -97,7 +97,6 @@ header {
 		padding: $emblem-vertical-padding $emblem-horizontal-padding;
 		height: $nav-header-height;
 		box-sizing: border-box;
-		background-color: $brand-colour;
 		color: #fff;
 		margin: 0;
 		font-size: 1.7rem;
@@ -111,8 +110,7 @@ header {
 		border-bottom: 1px solid rgba(0, 0, 0, 0.075);
 
 		img {
-			height: $emblem-size;
-			width: $emblem-size;
+			height: 30px;
 			margin-right: $space - 5;
 		}
 	}
