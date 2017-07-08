@@ -327,16 +327,18 @@ export class Chrome extends EventEmitter {
     });
   }
 
-  public async inject(src: string): Promise<boolean | Error> {
+  public async inject(src: string): Promise<boolean> {
     const fileContents = fs.readFileSync(src, { encoding: 'utf-8' });
     const extension = path.extname(src);
 
     if (extension === '.js') {
+      log(`injecting JavaScript file from ${src}`);
       await this.runScript(fileContents);
       return true;
     }
 
     if (extension === '.css') {
+      log(`injecting CSS file from ${src}`);
       const cssInjectScript = function(content) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -347,17 +349,21 @@ export class Chrome extends EventEmitter {
       return true;
     }
 
-    return new Error(`unknown extension type to inject: ${extension}`);
+    log(`Unknown extension ${extension}`);
+
+    return false;
   }
 
   public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
+    log(`getting coverage stats for ${src}`);
     const res = await cdp.Profiler.takePreciseCoverage();
     await cdp.Profiler.stopPreciseCoverage();
 
     const scriptCoverage = res.result.find((scriptCoverage) => scriptCoverage.url === src);
 
     if (!scriptCoverage) {
+      log(`${src} not found on the page.`);
       return new Error(`Couldn't locat script ${src} on the page.`);
     }
 
