@@ -1,3 +1,8 @@
+# 0.0.13
+
+## Fixes
+- README logo fixes and npm meta data.
+
 # 0.0.12
 
 ## Features
