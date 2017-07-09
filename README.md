@@ -1,7 +1,8 @@
-![Navalia](https://cdn.rawgit.com/joelgriffith/navalia/master/assets/logo-color.svg)
+![Navalia](./assets/logo-color.svg)
 
 [![npm version](https://badge.fury.io/js/navalia.svg)](https://badge.fury.io/js/navalia)
 [![Build Status](https://travis-ci.org/joelgriffith/navalia.svg?branch=master)](https://travis-ci.org/joelgriffith/navalia)
+[![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
 
 `npm install --save navalia`
 
