@@ -1,3 +1,10 @@
+# 0.0.12
+
+## Features
+- New `save` method to capture page HTML (useful for SEO generation).
+- Package updates
+- Minor logging improvements
+
 # 0.0.11
 
 ## Features
