@@ -38,6 +38,11 @@
     "lodash": "^4.17.4",
     "ts-node": "^3.1.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joelgriffith/navalia.git"
+  },
+  "bugs": "https://github.com/joelgriffith/navalia/issues",
   "jest": {
     "moduleFileExtensions": [
       "ts",

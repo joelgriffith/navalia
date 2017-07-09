@@ -1,4 +1,4 @@
-![Navalia](./assets/logo-color.svg)
+![Navalia](./assets/logo-color.png)
 
 [![npm version](https://badge.fury.io/js/navalia.svg)](https://badge.fury.io/js/navalia)
 [![Build Status](https://travis-ci.org/joelgriffith/navalia.svg?branch=master)](https://travis-ci.org/joelgriffith/navalia)
