@@ -223,7 +223,7 @@ export class Chrome extends EventEmitter {
     return !!await this.getSelectorId(selector);
   }
 
-  public async html(selector: string): Promise<string | null> {
+  public async html(selector: string = 'html'): Promise<string | null> {
     const cdp = await this.getChromeCDP();
 
     log(`getting '${selector}' HTML`);
@@ -237,6 +237,24 @@ export class Chrome extends EventEmitter {
     const { outerHTML } = await cdp.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
+  }
+
+  public async save(filePath: string): Promise<boolean> {
+    if (!path.isAbsolute(filePath)) {
+      throw new Error(`Filepath is not absolute: ${filePath}`);
+    }
+    log(`saving page HTML to ${filePath}`);
+
+    const html = await this.html();
+
+    try {
+      fs.writeFileSync(filePath, html);
+      log(`page HTML saved successfully to ${filePath}`);
+      return true;
+    } catch (error) {
+      log(`page HTML failed ${error.message}`);
+      return false;
+    }
   }
 
   public async click(selector: string): Promise<void> {
