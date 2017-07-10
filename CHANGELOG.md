@@ -1,3 +1,9 @@
+# 0.0.14
+
+## Features
+- `wait` now accepts a dom-node selector to wait on.
+- `evaluate` can now run async functions as Navalia instruments Chrome properly.
+
 # 0.0.13
 
 ## Fixes
