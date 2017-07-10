@@ -5,12 +5,13 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
-    "clean": "rimraf build",
-    "prepublish": "npm run build",
-    "test": "jest",
     "build": "npm run clean && tsc",
+    "clean": "rimraf build",
+    "docs": "cd docs && bundle exec jekyll serve",
+    "prepublish": "npm run build",
+    "release": "np",
     "start": "ts-node",
-    "docs": "cd docs && bundle exec jekyll serve"
+    "test": "jest"
   },
   "keywords": [
     "chrome",
@@ -28,6 +29,7 @@
     "@types/node": "^6.0.4",
     "jest": "^20.0.4",
     "nodemon": "^1.11.0",
+    "np": "^2.16.0",
     "rimraf": "^2.6.1",
     "typescript": "^2.4.1"
   },
