@@ -1,3 +1,10 @@
+# 0.0.15
+
+## Features
+- `Navalia.kill` is now exposed so that it can be shutdown.
+- `Navalia.run` returns a `Promise` for better orchestration around jobs.
+- `chrome.pageload` to wait for pageload on multi-page scripts.
+
 # 0.0.14
 
 ## Features
