@@ -140,6 +140,11 @@ export class Navalia {
     }
   }
 
+  public async kill(): Promise<void[]> {
+    log(`:kill() > killing all instances regardless of work-in-progress`);
+    return Promise.all(this.chromeInstances.map((chrome) => chrome.quit()));
+  }
+
   public run(handler: jobFunc): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.chromeInstances.length || this.chromeInstances.every(isBusy)) {
