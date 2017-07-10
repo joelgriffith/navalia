@@ -5,6 +5,12 @@ import { ChromeHelper, options as chromeOptions } from './util/ChromeHelper';
 
 const log = debug('navalia');
 
+interface queueItem {
+  handler: jobFunc;
+  resolve: Function;
+  reject: Function;
+}
+
 export interface clusterParams {
   numInstances?: number;
   maxJobs?: number;
@@ -21,7 +27,7 @@ const notBusy = (chrome: ChromeHelper): boolean => !isBusy(chrome);
 
 export class Navalia {
   private chromeInstances: ChromeHelper[];
-  private queueList: jobFunc[];
+  private queueList: queueItem[];
   private numInstances: number;
   private maxJobs: number;
   private workerTTL: number;
@@ -70,8 +76,11 @@ export class Navalia {
     log(`instance ${chrome.port} successfully closed`);
   }
 
-  private async execute(chrome: ChromeHelper | undefined, job: jobFunc | undefined): Promise<any> {
-    if (!chrome || !job) {
+  private async execute(
+    chrome: ChromeHelper | undefined,
+    queueItem: queueItem | undefined,
+  ): Promise<any> {
+    if (!chrome || (!queueItem || !queueItem.handler)) {
       throw new Error(`#execute was called with no instance of Chrome or a Job`);
     }
 
@@ -79,7 +88,12 @@ export class Navalia {
 
     log(`instance ${chrome.port} is starting work`);
 
-    await job(tab);
+    try {
+      const result = await queueItem.handler(tab);
+      queueItem.resolve(result);
+    } catch (error) {
+      queueItem.reject(error);
+    }
 
     tab.done();
 
@@ -126,14 +140,21 @@ export class Navalia {
     }
   }
 
-  public run(job: jobFunc): void {
-    if (!this.chromeInstances.length || this.chromeInstances.every(isBusy)) {
-      log('queueing work as all instances are busy');
-      this.queueList.push(job);
-    // Otherwise just push it through
-    } else {
+  public run(handler: jobFunc): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (!this.chromeInstances.length || this.chromeInstances.every(isBusy)) {
+        log('queueing work as all instances are busy');
+        this.queueList.push({
+          handler,
+          resolve,
+          reject,
+        });
+        return;
+      }
+
+      // Otherwise just push it through
       log('instances are available and starting');
-      this.execute(this.chromeInstances.find(notBusy), job);
-    }
+      this.execute(this.chromeInstances.find(notBusy), { handler, resolve, reject });
+    });
   }
 };

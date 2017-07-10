@@ -35,13 +35,21 @@ export const defaultFlags:flags = {
 
 // Contains all the business 
 export const launch = async(flags: flags, isHost: boolean = false): Promise<chromeInstance> => {
+  const logLevel:string = process.env.DEBUG && (
+    process.env.DEBUG.includes('ChromeLauncher') ||
+    process.env.DEBUG.includes('*')
+  ) ? 'info' : 'silent';
+
   const chromeFlags:string[] = _.chain(flags)
     .pickBy((value) => value)
     .map((_value, key) => `--${_.kebabCase(key)}`)
     .value();
 
   // Boot Chrome
-  const browser:chromeLauncher.LaunchedChrome = await chromeLauncher.launch({ chromeFlags });
+  const browser:chromeLauncher.LaunchedChrome = await chromeLauncher.launch({
+    chromeFlags,
+    logLevel,
+  });
 
   const cdp = isHost ? 
     await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` }) :

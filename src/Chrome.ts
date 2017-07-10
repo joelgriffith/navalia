@@ -24,6 +24,13 @@ type triggerEvents =
   'select'
 ;
 
+export interface httpRequest {
+  url: string,
+  method: string,
+  headers: object,
+  postData: string,
+}
+
 export interface options {
   flags?: chromeUtil.flags,
   cdp?: chromeUtil.cdp,
@@ -82,11 +89,11 @@ export class Chrome extends EventEmitter {
       return this.cdp;
     }
 
-    log(`starting chrome`);
+    log(`:getChromeCDP() > starting chrome`);
 
     const { browser, cdp } = await chromeUtil.launch(this.flags || chromeUtil.defaultFlags);
 
-    log(`chrome launched on port ${browser.port}`);
+    log(`:getChromeCDP() > chrome launched on port ${browser.port}`);
 
     this.kill = browser.kill;
     this.cdp = cdp;
@@ -165,17 +172,17 @@ export class Chrome extends EventEmitter {
     const runCoverage = opts.coverage === undefined ? false : opts.coverage;
 
     if (runCoverage) {
-      log(`gathering coverage for ${url}`);
+      log(`:goto() > gathering coverage for ${url}`);
       await cdp.Profiler.enable();
       await cdp.Profiler.startPreciseCoverage();
     }
 
-    log(`going to ${url}`);
+    log(`:goto() > going to ${url}`);
 
     await cdp.Page.navigate({ url });
 
     if (waitForPageload) {
-      log(`waiting for pageload on ${url}`);
+      log(`:goto() > waiting for pageload on ${url}`);
       await cdp.Page.loadEventFired();
     }
 
@@ -195,7 +202,7 @@ export class Chrome extends EventEmitter {
       })();
     `;
 
-    log(`executing script: ${script}`);
+    log(`:evaluate() > executing script: ${script}`);
 
     // Always eval scripts as if they were async
     const response = await this.runScript(script, true);
@@ -224,7 +231,7 @@ export class Chrome extends EventEmitter {
 
     const cdp = await this.getChromeCDP();
 
-    log(`saving screenshot to ${filePath}`);
+    log(`:screenshot() > saving screenshot to ${filePath}`);
 
     const base64Image = await cdp.Page.captureScreenshot();
     const buffer = new Buffer(base64Image.data, 'base64');
@@ -238,7 +245,7 @@ export class Chrome extends EventEmitter {
     }
     const cdp = await this.getChromeCDP();
 
-    log(`saving PDF to ${filePath}`);
+    log(`:pdf() > saving PDF to ${filePath}`);
 
     const base64Image = await cdp.Page.printToPDF();
     const buffer = new Buffer(base64Image.data, 'base64');
@@ -249,7 +256,7 @@ export class Chrome extends EventEmitter {
   public async size(width:number, height:number): Promise<any> {
     const cdp = await this.getChromeCDP();
 
-    log(`setting window size to ${width}x${height}`);
+    log(`:size() > setting window size to ${width}x${height}`);
 
     await cdp.Emulation.setVisibleSize({ width, height });
     return cdp.Emulation.setDeviceMetricsOverride({
@@ -262,7 +269,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async exists(selector: string): Promise<boolean> {
-    log(`checking if '${selector}' exists`);
+    log(`:exists() > checking if '${selector}' exists`);
     
     return !!await this.getSelectorId(selector);
   }
@@ -270,7 +277,7 @@ export class Chrome extends EventEmitter {
   public async html(selector: string = 'html'): Promise<string | null> {
     const cdp = await this.getChromeCDP();
 
-    log(`getting '${selector}' HTML`);
+    log(`:html() > getting '${selector}' HTML`);
 
     const nodeId = await this.getSelectorId(selector);
 
@@ -287,34 +294,34 @@ export class Chrome extends EventEmitter {
     if (!path.isAbsolute(filePath)) {
       throw new Error(`Filepath is not absolute: ${filePath}`);
     }
-    log(`saving page HTML to ${filePath}`);
+    log(`:save() > saving page HTML to ${filePath}`);
 
     const html = await this.html();
 
     try {
       fs.writeFileSync(filePath, html);
-      log(`page HTML saved successfully to ${filePath}`);
+      log(`:save() > page HTML saved successfully to ${filePath}`);
       return true;
     } catch (error) {
-      log(`page HTML failed ${error.message}`);
+      log(`:save() > page HTML failed ${error.message}`);
       return false;
     }
   }
 
   public async click(selector: string): Promise<void> {
-    log(`clicking '${selector}'`);
+    log(`:click() > clicking '${selector}'`);
 
     return this.trigger('click', selector);
   }
 
   public async focus(selector: string): Promise<void> {
-    log(`focusing '${selector}'`);
+    log(`:focus() > focusing '${selector}'`);
 
     return this.trigger('focus', selector);
   }
 
   public async type(selector:string, value:string): Promise<void> {
-    log(`typing'${value}' into '${selector}'`);
+    log(`:type() > typing'${value}' into '${selector}'`);
 
     return this.evaluate((selector, value) => {
       var element = document.querySelector(selector);
@@ -325,7 +332,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async check(selector:string): Promise<void> {
-    log(`checking checkbox '${selector}'`);
+    log(`:check() > checking checkbox '${selector}'`);
 
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
@@ -336,7 +343,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async uncheck(selector:string): Promise<void> {
-    log(`un-checking checkbox '${selector}'`);
+    log(`:uncheck() > un-checking checkbox '${selector}'`);
 
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
@@ -347,7 +354,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async select(selector: string, option:string): Promise<void> {
-    log(`selecting option '${option}' in '${selector}'`);
+    log(`:select() > selecting option '${option}' in '${selector}'`);
 
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
@@ -358,7 +365,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async visible(selector: string): Promise<boolean> {
-    log(`seeing if '${selector}' is visible`);
+    log(`:visible() > seeing if '${selector}' is visible`);
 
     return this.evaluate((selector) => {
       var element = document.querySelector(selector);
@@ -383,14 +390,14 @@ export class Chrome extends EventEmitter {
 
   public async wait(waitParam: number | string): Promise<any> {
     if (typeof waitParam === 'number') {
-      log(`waiting ${waitParam} ms`);
+      log(`:wait() > waiting ${waitParam} ms`);
 
       return new Promise((resolve) => { 
         setTimeout(() => resolve(), waitParam);
       });
     }
 
-    log(`waiting for selector "${waitParam}" to be inserted`);
+    log(`:wait() > waiting for selector "${waitParam}" to be inserted`);
 
     return this.evaluate(waitForElement, waitParam, defaultTimeout);
   }
@@ -400,13 +407,13 @@ export class Chrome extends EventEmitter {
     const extension = path.extname(src);
 
     if (extension === '.js') {
-      log(`injecting JavaScript file from ${src}`);
+      log(`:inject() > injecting JavaScript file from ${src}`);
       await this.runScript(fileContents);
       return true;
     }
 
     if (extension === '.css') {
-      log(`injecting CSS file from ${src}`);
+      log(`:inject() > injecting CSS file from ${src}`);
       const cssInjectScript = function(content) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -417,21 +424,29 @@ export class Chrome extends EventEmitter {
       return true;
     }
 
-    log(`Unknown extension ${extension}`);
+    log(`:inject() > Unknown extension ${extension}`);
 
     return false;
   }
 
+  public async pageload(): Promise<void> {
+    const cdp = await this.getChromeCDP();
+
+    log(`:pageload() > waiting for pageload to be called`);
+
+    return cdp.Page.loadEventFired();
+  }
+
   public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
-    log(`getting coverage stats for ${src}`);
+    log(`:coverage() > getting coverage stats for ${src}`);
     const res = await cdp.Profiler.takePreciseCoverage();
     await cdp.Profiler.stopPreciseCoverage();
 
     const scriptCoverage = res.result.find((scriptCoverage) => scriptCoverage.url === src);
 
     if (!scriptCoverage) {
-      log(`${src} not found on the page.`);
+      log(`:coverage() > ${src} not found on the page.`);
       return new Error(`Couldn't locat script ${src} on the page.`);
     }
 
@@ -466,10 +481,10 @@ export class Chrome extends EventEmitter {
   }
 
   public done(): void {
-    log(`finished`);
+    log(`:done() > finished`);
 
     if (this.kill) {
-      log(`closing chrome`);
+      log(`:done() > closing chrome`);
       this.kill();
     }
 
