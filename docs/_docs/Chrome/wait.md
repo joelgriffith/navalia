@@ -7,7 +7,7 @@ The `wait` method accepts either a selector to wait for, or time in MS, before a
 
 > When using a selector, Navalia will fail after waiting for 10 seconds
 
-## Using a selector
+### Using a selector
 
 *JavaScript*
 ```js
@@ -37,7 +37,7 @@ async function wait() {
 wait();
 ```
 
-## Using a number
+### Using a number
 
 *JavaScript*
 ```js
