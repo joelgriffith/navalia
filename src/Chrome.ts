@@ -6,6 +6,9 @@ import * as chromeUtil from './util/chrome';
 
 const log = debug('navalia:chrome');
 
+// 10 second default timeout
+const defaultTimeout = 1000 * 10;
+
 type triggerEvents =
   'click' |
   'mousedown' |
@@ -39,6 +42,28 @@ export const pageloadOpts = {
   onload: true,
   coverage: false,
 };
+
+function waitForElement(selector, timeout) {
+  return new Promise((resolve, reject) => {
+    const timeOutId = setTimeout(() => {
+      reject(`Selector "${selector}" failed to appear in ${timeout} ms`);
+    }, timeout);
+    const observer = new MutationObserver(function (_mutations, observation) {
+      const found = document.querySelector(selector);
+      if (found) {
+        observation.disconnect();
+        clearTimeout(timeOutId);
+        return resolve();
+      }
+    });
+
+    // start observing
+    observer.observe(document, {
+      childList: true,
+      subtree: true
+    });
+  });
+}
 
 export class Chrome extends EventEmitter {
   private cdp?: chromeUtil.cdp;
@@ -123,10 +148,14 @@ export class Chrome extends EventEmitter {
     return this.evaluate(expression, selector, eventName, eventClass);
   }
 
-  private async runScript(script: string): Promise<any> {
+  private async runScript(script: string, async: boolean = false): Promise<any> {
     const cdp = await this.getChromeCDP();
 
-    return await cdp.Runtime.evaluate({ expression: script, returnByValue: true });
+    return await cdp.Runtime.evaluate({
+      expression: script,
+      returnByValue: true,
+      awaitPromise: async,
+    });
   }
 
   public async goto(url: string, opts: navigateOpts = pageloadOpts): Promise<void> {
@@ -154,19 +183,34 @@ export class Chrome extends EventEmitter {
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
-    const script = `(${String(expression)}).apply(null, ${JSON.stringify(args)})`;
-    
-    log(`executing script: ${script}`);
-    
-    const result = await this.runScript(script);
+    // Assume scripts are async, and if not wrap the result in a resolve calls
+    const script = `
+      (() => {
+        const result = (${String(expression)}).apply(null, ${JSON.stringify(args)});
+        if (result.then) {
+          result.catch((error) => { throw new Error(error); });
+          return result;
+        }
+        return Promise.resolve(result);
+      })();
+    `;
 
-    if (result) {
-      if (result.exceptionDetails) {
-        return new Error(result.exceptionDetails.exception.description);
+    log(`executing script: ${script}`);
+
+    // Always eval scripts as if they were async
+    const response = await this.runScript(script, true);
+
+    if (response) {
+      if (response.exceptionDetails) {
+        return new Error(
+          response.exceptionDetails.exception.description ||
+          response.exceptionDetails.exception.value ||
+          response.exceptionDetails.text
+        );
       }
 
-      if (result.result && result.result.value) {
-        return result.result.value;
+      if (response.result && response.result.value) {
+        return response.result.value;
       }
     }
 
@@ -337,12 +381,18 @@ export class Chrome extends EventEmitter {
     }, selector);
   }
 
-  public async wait(time: number): Promise<object> {
-    log(`waiting ${time} ms`);
+  public async wait(waitParam: number | string): Promise<any> {
+    if (typeof waitParam === 'number') {
+      log(`waiting ${waitParam} ms`);
 
-    return new Promise((resolve) => { 
-      setTimeout(() => resolve(), time);
-    });
+      return new Promise((resolve) => { 
+        setTimeout(() => resolve(), waitParam);
+      });
+    }
+
+    log(`waiting for selector "${waitParam}" to be inserted`);
+
+    return this.evaluate(waitForElement, waitParam, defaultTimeout);
   }
 
   public async inject(src: string): Promise<boolean> {

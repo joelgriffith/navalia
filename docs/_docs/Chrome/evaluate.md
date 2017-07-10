@@ -3,9 +3,11 @@ title: .evaluate
 category: Chrome
 ---
 
-The async `evaluate` method accepts a function, and an optional set of arguments, to run inside of the Chrome JavaScript evironment. It's important to highlight that any arguments or other references _must_ be passed in as an argument (things like closures won't work).
+The async `evaluate` method accepts a function, and an optional set of arguments, to run inside of the Chrome JavaScript evironment. It's important to highlight that any arguments or other references _must_ be passed in as an argument (things like closures won't work). This is due to the fact that the function gets injected into the Chrome runtime, which requires everything to be serialzed.
 
 Evaluate returns the result of the function, or an Error instance if the script throws. If no value is returned, the method will simply return `null`.
+
+> You can also execute async functions. Navalia will handle them as long as they return a 'then`-able
 
 *JavaScript*
 ```js
