@@ -57,7 +57,7 @@
       "**/__tests__/*.(ts|tsx|js)"
     ],
     "transformIgnorePatterns": [
-      "<rootDir>/node_modules/(?!lighthouse)"
+      "<rootDir>/node_modules/(?!chrome-launcher)"
     ]
   }
 }
