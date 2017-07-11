@@ -165,6 +165,16 @@ export class Chrome extends EventEmitter {
     });
   }
 
+  private async simulateKeyPress(type:string = 'char', key: string | null = null, modifiers:number = 0): Promise<any> {
+    const cdp = await this.getChromeCDP();
+
+    await cdp.Input.dispatchKeyEvent({
+      type,
+      modifiers,
+      text: key
+    });
+  }
+
   public async goto(url: string, opts: navigateOpts = pageloadOpts): Promise<void> {
     const cdp = await this.getChromeCDP();
 
@@ -315,20 +325,27 @@ export class Chrome extends EventEmitter {
   }
 
   public async focus(selector: string): Promise<void> {
+    const cdp = await this.getChromeCDP();
+
     log(`:focus() > focusing '${selector}'`);
 
-    return this.trigger('focus', selector);
+    const { root: { nodeId }} = await cdp.DOM.getDocument();
+    const { nodeId: foundNode } = await cdp.DOM.querySelector({ selector, nodeId });
+
+    return cdp.DOM.focus({ nodeId: foundNode });
   }
 
-  public async type(selector:string, value:string): Promise<void> {
+  public async type(selector:string, value:string): Promise<{}> {
     log(`:type() > typing'${value}' into '${selector}'`);
 
-    return this.evaluate((selector, value) => {
-      var element = document.querySelector(selector);
-      if (element) {
-        element.value = value;
-      }
-    }, selector, value);
+      // Focus on the selector
+    await this.focus(selector);
+
+    const keys = value.split('') || [];
+
+    return Promise.all(
+      keys.map(async (key) => this.simulateKeyPress('char', key))
+    );
   }
 
   public async check(selector:string): Promise<void> {

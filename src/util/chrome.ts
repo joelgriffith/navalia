@@ -15,6 +15,7 @@ export interface cdp {
   Target: any,
   Emulation: any,
   Profiler: any,
+  Input: any,
 }
 
 export interface tab {
