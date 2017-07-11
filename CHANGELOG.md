@@ -1,3 +1,8 @@
+# 0.0.16
+
+## Fixes
+- `focus` and `type` now emit native events and not synthetic JavaScript ones.
+
 # 0.0.15
 
 ## Features
