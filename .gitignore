@@ -11,3 +11,6 @@ build/
 # Caches
 .sass-cache
 _site
+
+# Coverage
+coverage

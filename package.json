@@ -7,11 +7,13 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf build",
+    "cover": "jest --coverage",
     "docs": "cd docs && bundle exec jekyll serve",
     "prepublish": "npm run build",
     "release": "np",
     "start": "ts-node",
-    "test": "jest"
+    "test": "jest",
+    "watch": "jest --watch"
   },
   "keywords": [
     "chrome",
@@ -46,6 +48,7 @@
   },
   "bugs": "https://github.com/joelgriffith/navalia/issues",
   "jest": {
+    "testEnvironment": "node",
     "moduleFileExtensions": [
       "ts",
       "js"
