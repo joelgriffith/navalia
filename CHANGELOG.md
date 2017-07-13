@@ -1,3 +1,9 @@
+# 0.0.17
+
+## Features
+- `screenshot` now returns a Buffer of base64 encoded data when supplied with no path.
+- Links to external DOCS in the README.
+
 # 0.0.16
 
 ## Fixes

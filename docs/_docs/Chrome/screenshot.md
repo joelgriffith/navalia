@@ -3,7 +3,9 @@ title: .screenshot
 category: Chrome
 ---
 
-The `screenshot` method takes a single argument: a file-path (absolute) of where to save the screenshot. The output is always `.png`:
+The `screenshot` method takes an optional single argument: a file-path (absolute) of where to save the screenshot. If no filepath is supplied the method will return a `Buffer` of `base64` encoded data.
+
+> The screenshot method generates a png file.
 
 *JavaScript*
 ```js
