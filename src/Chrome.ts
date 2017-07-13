@@ -234,11 +234,7 @@ export class Chrome extends EventEmitter {
     return null;
   }
 
-  public async screenshot(filePath: string): Promise<any> {
-    if (!path.isAbsolute(filePath)) {
-      throw new Error(`Filepath is not absolute: ${filePath}`);
-    }
-
+  public async screenshot(filePath?: string): Promise<void | Buffer> {
     const cdp = await this.getChromeCDP();
 
     log(`:screenshot() > saving screenshot to ${filePath}`);
@@ -246,7 +242,15 @@ export class Chrome extends EventEmitter {
     const base64Image = await cdp.Page.captureScreenshot();
     const buffer = new Buffer(base64Image.data, 'base64');
 
-    return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    if (filePath) {
+      if (!path.isAbsolute(filePath)) {
+        throw new Error(`Filepath is not absolute: ${filePath}`);
+      }
+
+      return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    }
+
+    return buffer;
   }
 
   public async pdf(filePath: string): Promise<any> {
