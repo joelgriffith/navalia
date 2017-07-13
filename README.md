@@ -10,6 +10,12 @@
 
 Automate and scale browser workflows with a sane API. Navalia exports a handy `Navalia` module that acts as browser-load balancer, as well as a `Chrome` module that you can use for an easier experience.
 
+## Usage
+
+- [Functional Testing](https://codeburst.io/composable-end-to-end-tests-for-react-apps-2ec82170af62)
+
+- [Website Code Coverage](https://codeburst.io/capturing-unused-application-code-2b7594a9fe06)
+
 **BETA WARNING**
 This project heavily relies on bleeding-edge technology, as such the API and internals will likely change from time to time. I heavily recommend that you install `Chrome Canary` to capture the latest and greatest the browser has to offer.
 
