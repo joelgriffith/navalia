@@ -25,7 +25,7 @@ export interface tab {
 
 export interface chromeInstance {
   browser: chromeLauncher.LaunchedChrome,
-  cdp: any
+  cdp: cdp,
 }
 
 export const defaultFlags:flags = {
@@ -34,42 +34,46 @@ export const defaultFlags:flags = {
   hideScrollbars: true,
 };
 
+export const transformChromeFlags = (flags: flags) => {
+  return _.chain(flags)
+    .pickBy((value) => value)
+    .map((_value, key) => `--${_.kebabCase(key)}`)
+    .value();
+};
+
 // Contains all the business 
 export const launch = async(flags: flags, isHost: boolean = false): Promise<chromeInstance> => {
-  const logLevel:string = process.env.DEBUG && (
+  const logLevel = process.env.DEBUG && (
     process.env.DEBUG.includes('ChromeLauncher') ||
     process.env.DEBUG.includes('*')
   ) ? 'info' : 'silent';
 
-  const chromeFlags:string[] = _.chain(flags)
-    .pickBy((value) => value)
-    .map((_value, key) => `--${_.kebabCase(key)}`)
-    .value();
+  const chromeFlags = transformChromeFlags(flags);
 
   // Boot Chrome
-  const browser:chromeLauncher.LaunchedChrome = await chromeLauncher.launch({
+  const browser = await chromeLauncher.launch({
     chromeFlags,
     logLevel,
   });
 
-  const cdp = isHost ? 
+  const cdp: cdp = isHost ? 
     await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` }) :
     await CDP({ port: browser.port });
 
   await Promise.all(
     isHost ?
       [] :
-      [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(),cdp.CSS.enable() ]
+      [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(), cdp.CSS.enable() ]
   );
 
   // Return both the browser and the CDP instance
   return {
     browser,
     cdp,
-  }
+  };
 }
 
-export const createTab = async (cdp: cdp, port:number): Promise<tab> => {
+export const createTab = async (cdp: cdp, port: number): Promise<tab> => {
   const { browserContextId } = cdp.Target.createBrowserContext();
 
   const { targetId } = await cdp.Target.createTarget({
@@ -78,7 +82,7 @@ export const createTab = async (cdp: cdp, port:number): Promise<tab> => {
   });
 
   // connct to the new context
-  const tab = await CDP({ tab: `ws://localhost:${port}/devtools/page/${targetId}` });
+  const tab: cdp = await CDP({ tab: `ws://localhost:${port}/devtools/page/${targetId}` });
 
   // Enable all the domains on the tab
   await Promise.all([
