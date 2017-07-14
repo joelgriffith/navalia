@@ -304,24 +304,65 @@ export class Chrome extends EventEmitter {
   }
 
   public async fetch(...args): Promise<any> {
-    return this.evaluate(
-      (...fetchArgs) => {
-        return fetch.apply(null, fetchArgs).then((res) => {
-          const contentType = res.headers.get('content-type');
+    const cdp = await this.getChromeCDP();
+    
+    let requestFound = false;
+    let requestHasResponded = false;
+    let requestId = null;
+    let response = {};
 
-          if (!res.ok) {
-            throw (res.statusText || res.status);
-          }
+    cdp.Network.requestWillBeSent((params) => {
+      if (requestFound) return;
 
-          if (contentType && contentType.indexOf('application/json') !== -1) {
-            return res.json();
-          }
+      if (params.request.url === args[0]) {
+        requestFound = true;
+        requestId = params.requestId;
+      }
+    });
 
-          return res.text();
+    cdp.Network.loadingFailed((params) => {
+      if (requestHasResponded) return;
+
+      if (params.requestId === requestId) {
+        response = Object.assign({}, response, {
+          error: params.errorText,
         });
-      },
-      ...args
-    );
+      }
+    });
+
+    cdp.Network.responseReceived((params) => {
+      if (requestHasResponded) return;
+
+      if (params.requestId === requestId) {
+        requestHasResponded = true;
+        response = params.response;
+      }
+    });
+
+    return new Promise(async(resolve) => {
+      const body = await this.evaluate(
+        (...fetchArgs) => {
+          return fetch.apply(null, fetchArgs).then((res) => {
+            const contentType = res.headers.get('content-type');
+
+            if (!res.ok) {
+              throw (res.statusText || res.status);
+            }
+
+            if (contentType && contentType.indexOf('application/json') !== -1) {
+              return res.json();
+            }
+
+            return res.text();
+          }).catch(() => {
+            return null;
+          });
+        },
+        ...args
+      );
+
+      return resolve(Object.assign({}, response, body ? { body } : null));
+    });
   }
 
   public async save(filePath: string): Promise<boolean> {
