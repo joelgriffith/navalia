@@ -75,6 +75,7 @@ function waitForElement(selector, timeout) {
 export class Chrome extends EventEmitter {
   private cdp?: chromeUtil.cdp;
   private flags?: chromeUtil.flags;
+  private styleSheetsLoaded: any[];
   private kill: () => Promise<{}>;
 
   constructor(opts: options = {}) {
@@ -82,6 +83,7 @@ export class Chrome extends EventEmitter {
 
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
+    this.styleSheetsLoaded = [];
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -185,6 +187,11 @@ export class Chrome extends EventEmitter {
       log(`:goto() > gathering coverage for ${url}`);
       await cdp.Profiler.enable();
       await cdp.Profiler.startPreciseCoverage();
+      await cdp.CSS.startRuleUsageTracking();
+
+      cdp.CSS.styleSheetAdded((param) => {
+        this.styleSheetsLoaded.push(param.header);
+      });
     }
 
     log(`:goto() > going to ${url}`);
@@ -305,12 +312,15 @@ export class Chrome extends EventEmitter {
 
   public async fetch(...args): Promise<any> {
     const cdp = await this.getChromeCDP();
+
+    log(`:fetch() > fetching resource with args: ${JSON.stringify(args)}`)
     
     let requestFound = false;
     let requestHasResponded = false;
     let requestId = null;
     let response = {};
 
+    // Might move these into a private helper...
     cdp.Network.requestWillBeSent((params) => {
       if (requestFound) return;
 
@@ -522,10 +532,13 @@ export class Chrome extends EventEmitter {
   public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
     log(`:coverage() > getting coverage stats for ${src}`);
-    const res = await cdp.Profiler.takePreciseCoverage();
+
+    const jsCoverages = await cdp.Profiler.takePreciseCoverage();
+    const cssCoverages = await cdp.CSS.stopRuleUsageTracking();
+    console.log(cssCoverages);
     await cdp.Profiler.stopPreciseCoverage();
 
-    const scriptCoverage = res.result.find((scriptCoverage) => scriptCoverage.url === src);
+    const scriptCoverage = jsCoverages.result.find((scriptCoverage) => scriptCoverage.url === src);
 
     if (!scriptCoverage) {
       log(`:coverage() > ${src} not found on the page.`);
