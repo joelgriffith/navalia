@@ -221,7 +221,6 @@ export class Chrome extends EventEmitter {
       if (response.exceptionDetails) {
         return new Error(
           response.exceptionDetails.exception.description ||
-          response.exceptionDetails.exception.value ||
           response.exceptionDetails.text
         );
       }
@@ -302,6 +301,27 @@ export class Chrome extends EventEmitter {
     const { outerHTML } = await cdp.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
+  }
+
+  public async fetch(...args): Promise<any> {
+    return this.evaluate(
+      (...fetchArgs) => {
+        return fetch.apply(null, fetchArgs).then((res) => {
+          const contentType = res.headers.get('content-type');
+
+          if (!res.ok) {
+            throw (res.statusText || res.status);
+          }
+
+          if (contentType && contentType.indexOf('application/json') !== -1) {
+            return res.json();
+          }
+
+          return res.text();
+        });
+      },
+      ...args
+    );
   }
 
   public async save(filePath: string): Promise<boolean> {

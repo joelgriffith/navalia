@@ -9,4 +9,4 @@ cache:
 node_js:
   - '8'
 script:
-  'npm run build'
+  'npm test'
