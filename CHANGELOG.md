@@ -1,3 +1,22 @@
+# 0.0.19
+
+## Features
+- More tests! Thanks @mute!
+- `fetch` API now returns all the data that comes with a network request.
+
+## Breaking
+- `fetch`: Prior to 0.0.19, fetch simply returned the response body. You can refernce that data in the `body` property of the response going forward:
+
+```
+// before
+const it = await chrome.fetch('myurl');
+console.log(it)
+
+// after
+const it = await chrome.fetch('myurl');
+console.log(it.body);
+```
+
 # 0.0.18
 
 ## Features
