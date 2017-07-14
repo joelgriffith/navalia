@@ -1,3 +1,11 @@
+# 0.0.20
+
+## Features
+- New `.text` API for getting the `text` inside of an element (and it's children).
+
+## Bugfix
+- Small fix in `evaluate` when a `null` is returned (no longer throws).
+
 # 0.0.19
 
 ## Features
