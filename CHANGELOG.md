@@ -1,3 +1,11 @@
+# 0.0.18
+
+## Features
+- `fetch`-like API for running arbitrary network requests with familiar interface
+
+## Fixes
+- Turning back on tests :)
+
 # 0.0.17
 
 ## Features
