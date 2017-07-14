@@ -10,35 +10,34 @@ const log = debug('navalia:chrome');
 const defaultTimeout = 1000 * 10;
 
 type triggerEvents =
-  'click' |
-  'mousedown' |
-  'mouseup' |
-  'mouseover' |
-  'touchstart' |
-  'touchend' |
-  'focus' |
-  'touchcancel' |
-  'touchmove' |
-  'change' |
-  'blur' |
-  'select'
-;
+  | 'click'
+  | 'mousedown'
+  | 'mouseup'
+  | 'mouseover'
+  | 'touchstart'
+  | 'touchend'
+  | 'focus'
+  | 'touchcancel'
+  | 'touchmove'
+  | 'change'
+  | 'blur'
+  | 'select';
 
 export interface httpRequest {
-  url: string,
-  method: string,
-  headers: object,
-  postData: string,
+  url: string;
+  method: string;
+  headers: object;
+  postData: string;
 }
 
 export interface options {
-  flags?: chromeUtil.flags,
-  cdp?: chromeUtil.cdp,
+  flags?: chromeUtil.flags;
+  cdp?: chromeUtil.cdp;
 }
 
 export interface navigateOpts {
-  onload?: boolean
-  coverage?: boolean
+  onload?: boolean;
+  coverage?: boolean;
 }
 
 export const events = {
@@ -55,7 +54,7 @@ function waitForElement(selector, timeout) {
     const timeOutId = setTimeout(() => {
       reject(`Selector "${selector}" failed to appear in ${timeout} ms`);
     }, timeout);
-    const observer = new MutationObserver(function (_mutations, observation) {
+    const observer = new MutationObserver(function(_mutations, observation) {
       const found = document.querySelector(selector);
       if (found) {
         observation.disconnect();
@@ -67,7 +66,7 @@ function waitForElement(selector, timeout) {
     // start observing
     observer.observe(document, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   });
 }
@@ -91,7 +90,9 @@ export class Chrome extends EventEmitter {
 
     log(`:getChromeCDP() > starting chrome`);
 
-    const { browser, cdp } = await chromeUtil.launch(this.flags || chromeUtil.defaultFlags);
+    const { browser, cdp } = await chromeUtil.launch(
+      this.flags || chromeUtil.defaultFlags,
+    );
 
     log(`:getChromeCDP() > chrome launched on port ${browser.port}`);
 
@@ -114,7 +115,10 @@ export class Chrome extends EventEmitter {
     return nodeId;
   }
 
-  private async trigger(eventName: triggerEvents, selector: string): Promise<any> {
+  private async trigger(
+    eventName: triggerEvents,
+    selector: string,
+  ): Promise<any> {
     let eventClass = '';
 
     switch (eventName) {
@@ -155,7 +159,10 @@ export class Chrome extends EventEmitter {
     return this.evaluate(expression, selector, eventName, eventClass);
   }
 
-  private async runScript(script: string, async: boolean = false): Promise<any> {
+  private async runScript(
+    script: string,
+    async: boolean = false,
+  ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
     return await cdp.Runtime.evaluate({
@@ -165,17 +172,24 @@ export class Chrome extends EventEmitter {
     });
   }
 
-  private async simulateKeyPress(type:string = 'char', key: string | null = null, modifiers:number = 0): Promise<any> {
+  private async simulateKeyPress(
+    type: string = 'char',
+    key: string | null = null,
+    modifiers: number = 0,
+  ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
     await cdp.Input.dispatchKeyEvent({
       type,
       modifiers,
-      text: key
+      text: key,
     });
   }
 
-  public async goto(url: string, opts: navigateOpts = pageloadOpts): Promise<void> {
+  public async goto(
+    url: string,
+    opts: navigateOpts = pageloadOpts,
+  ): Promise<void> {
     const cdp = await this.getChromeCDP();
 
     const waitForPageload = opts.onload === undefined ? true : opts.onload;
@@ -203,7 +217,9 @@ export class Chrome extends EventEmitter {
     // Assume scripts are async, and if not wrap the result in a resolve calls
     const script = `
       (() => {
-        const result = (${String(expression)}).apply(null, ${JSON.stringify(args)});
+        const result = (${String(expression)}).apply(null, ${JSON.stringify(
+      args,
+    )});
         if (result.then) {
           result.catch((error) => { throw new Error(error); });
           return result;
@@ -221,7 +237,7 @@ export class Chrome extends EventEmitter {
       if (response.exceptionDetails) {
         return new Error(
           response.exceptionDetails.exception.description ||
-          response.exceptionDetails.text
+            response.exceptionDetails.text,
         );
       }
 
@@ -266,7 +282,7 @@ export class Chrome extends EventEmitter {
     return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
   }
 
-  public async size(width:number, height:number): Promise<any> {
+  public async size(width: number, height: number): Promise<any> {
     const cdp = await this.getChromeCDP();
 
     log(`:size() > setting window size to ${width}x${height}`);
@@ -283,7 +299,7 @@ export class Chrome extends EventEmitter {
 
   public async exists(selector: string): Promise<boolean> {
     log(`:exists() > checking if '${selector}' exists`);
-    
+
     return !!await this.getSelectorId(selector);
   }
 
@@ -305,13 +321,13 @@ export class Chrome extends EventEmitter {
 
   public async fetch(...args): Promise<any> {
     const cdp = await this.getChromeCDP();
-    
+
     let requestFound = false;
     let requestHasResponded = false;
     let requestId = null;
     let response = {};
 
-    cdp.Network.requestWillBeSent((params) => {
+    cdp.Network.requestWillBeSent(params => {
       if (requestFound) return;
 
       if (params.request.url === args[0]) {
@@ -320,7 +336,7 @@ export class Chrome extends EventEmitter {
       }
     });
 
-    cdp.Network.loadingFailed((params) => {
+    cdp.Network.loadingFailed(params => {
       if (requestHasResponded) return;
 
       if (params.requestId === requestId) {
@@ -330,7 +346,7 @@ export class Chrome extends EventEmitter {
       }
     });
 
-    cdp.Network.responseReceived((params) => {
+    cdp.Network.responseReceived(params => {
       if (requestHasResponded) return;
 
       if (params.requestId === requestId) {
@@ -339,14 +355,15 @@ export class Chrome extends EventEmitter {
       }
     });
 
-    return new Promise(async(resolve) => {
-      const body = await this.evaluate(
-        (...fetchArgs) => {
-          return fetch.apply(null, fetchArgs).then((res) => {
+    return new Promise(async resolve => {
+      const body = await this.evaluate((...fetchArgs) => {
+        return fetch
+          .apply(null, fetchArgs)
+          .then(res => {
             const contentType = res.headers.get('content-type');
 
             if (!res.ok) {
-              throw (res.statusText || res.status);
+              throw res.statusText || res.status;
             }
 
             if (contentType && contentType.indexOf('application/json') !== -1) {
@@ -354,12 +371,11 @@ export class Chrome extends EventEmitter {
             }
 
             return res.text();
-          }).catch(() => {
+          })
+          .catch(() => {
             return null;
           });
-        },
-        ...args
-      );
+      }, ...args);
 
       return resolve(Object.assign({}, response, body ? { body } : null));
     });
@@ -394,29 +410,32 @@ export class Chrome extends EventEmitter {
 
     log(`:focus() > focusing '${selector}'`);
 
-    const { root: { nodeId }} = await cdp.DOM.getDocument();
-    const { nodeId: foundNode } = await cdp.DOM.querySelector({ selector, nodeId });
+    const { root: { nodeId } } = await cdp.DOM.getDocument();
+    const { nodeId: foundNode } = await cdp.DOM.querySelector({
+      selector,
+      nodeId,
+    });
 
     return cdp.DOM.focus({ nodeId: foundNode });
   }
 
-  public async type(selector:string, value:string): Promise<{}> {
+  public async type(selector: string, value: string): Promise<{}> {
     log(`:type() > typing'${value}' into '${selector}'`);
 
-      // Focus on the selector
+    // Focus on the selector
     await this.focus(selector);
 
     const keys = value.split('') || [];
 
     return Promise.all(
-      keys.map(async (key) => this.simulateKeyPress('char', key))
+      keys.map(async key => this.simulateKeyPress('char', key)),
     );
   }
 
-  public async check(selector:string): Promise<void> {
+  public async check(selector: string): Promise<void> {
     log(`:check() > checking checkbox '${selector}'`);
 
-    return this.evaluate((selector) => {
+    return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = true;
@@ -424,10 +443,10 @@ export class Chrome extends EventEmitter {
     }, selector);
   }
 
-  public async uncheck(selector:string): Promise<void> {
+  public async uncheck(selector: string): Promise<void> {
     log(`:uncheck() > un-checking checkbox '${selector}'`);
 
-    return this.evaluate((selector) => {
+    return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = false;
@@ -435,10 +454,10 @@ export class Chrome extends EventEmitter {
     }, selector);
   }
 
-  public async select(selector: string, option:string): Promise<void> {
+  public async select(selector: string, option: string): Promise<void> {
     log(`:select() > selecting option '${option}' in '${selector}'`);
 
-    return this.evaluate((selector) => {
+    return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.value = option;
@@ -449,7 +468,7 @@ export class Chrome extends EventEmitter {
   public async visible(selector: string): Promise<boolean> {
     log(`:visible() > seeing if '${selector}' is visible`);
 
-    return this.evaluate((selector) => {
+    return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         let style;
@@ -459,12 +478,12 @@ export class Chrome extends EventEmitter {
           return false;
         }
         if (style.visibility === 'hidden' || style.display === 'none') {
-          return false
+          return false;
         }
         if (style.display === 'inline' || style.display === 'inline-block') {
-          return true
+          return true;
         }
-        return (element.offsetWidth > 0 && element.offsetHeight > 0);
+        return element.offsetWidth > 0 && element.offsetHeight > 0;
       }
       return false;
     }, selector);
@@ -474,7 +493,7 @@ export class Chrome extends EventEmitter {
     if (typeof waitParam === 'number') {
       log(`:wait() > waiting ${waitParam} ms`);
 
-      return new Promise((resolve) => { 
+      return new Promise(resolve => {
         setTimeout(() => resolve(), waitParam);
       });
     }
@@ -519,44 +538,66 @@ export class Chrome extends EventEmitter {
     return cdp.Page.loadEventFired();
   }
 
-  public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
+  public async coverage(
+    src: string,
+  ): Promise<{ total: number; unused: number; percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
     log(`:coverage() > getting coverage stats for ${src}`);
     const res = await cdp.Profiler.takePreciseCoverage();
     await cdp.Profiler.stopPreciseCoverage();
 
-    const scriptCoverage = res.result.find((scriptCoverage) => scriptCoverage.url === src);
+    const scriptCoverage = res.result.find(
+      scriptCoverage => scriptCoverage.url === src,
+    );
 
     if (!scriptCoverage) {
       log(`:coverage() > ${src} not found on the page.`);
       return new Error(`Couldn't locat script ${src} on the page.`);
     }
 
-    if (scriptCoverage && scriptCoverage.functions && scriptCoverage.functions.length) {
-      const coverageData = scriptCoverage.functions.reduce((fnAccum, coverageStats) => {
-        const functionStats = coverageStats.ranges.reduce((rangeAccum, range) => {
+    if (
+      scriptCoverage &&
+      scriptCoverage.functions &&
+      scriptCoverage.functions.length
+    ) {
+      const coverageData = scriptCoverage.functions.reduce(
+        (fnAccum, coverageStats) => {
+          const functionStats = coverageStats.ranges.reduce(
+            (rangeAccum, range) => {
+              return {
+                total:
+                  range.endOffset > rangeAccum.total
+                    ? range.endOffset
+                    : rangeAccum.total,
+                unused:
+                  rangeAccum.unused +
+                  (range.count === 0 ? range.endOffset - range.startOffset : 0),
+              };
+            },
+            {
+              total: 0,
+              unused: 0,
+            },
+          );
+
           return {
-            total: range.endOffset > rangeAccum.total ? range.endOffset : rangeAccum.total,
-            unused: rangeAccum.unused + (range.count === 0 ? (range.endOffset - range.startOffset) : 0),
+            total:
+              functionStats.total > fnAccum.total
+                ? functionStats.total
+                : fnAccum.total,
+            unused: fnAccum.unused + functionStats.unused,
           };
-        }, {
+        },
+        {
           total: 0,
           unused: 0,
-        });
+        },
+      );
 
-        return {
-          total: functionStats.total > fnAccum.total ? functionStats.total : fnAccum.total,
-          unused: fnAccum.unused + functionStats.unused,
-        };
-      }, {
-        total: 0,
-        unused: 0,
-      });
-      
       return {
         ...coverageData,
         percentUnused: coverageData.unused / coverageData.total,
-      }
+      };
     }
 
     return new Error(`Couldn't parse code coverge for script ${src}`);

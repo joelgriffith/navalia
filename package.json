@@ -9,7 +9,9 @@
     "clean": "rimraf build",
     "cover": "jest --coverage",
     "docs": "cd docs && bundle exec jekyll serve",
+    "precommit": "lint-staged",
     "prepublish": "npm run build",
+    "prettier": "prettier --single-quote --trailing-comma es5 --write \"src/**/*.ts\"",
     "release": "np",
     "start": "ts-node",
     "test": "jest",
@@ -29,9 +31,12 @@
     "@types/jest": "^20.0.2",
     "@types/lodash": "^4.14.67",
     "@types/node": "^6.0.4",
+    "husky": "^0.14.3",
     "jest": "^20.0.4",
+    "lint-staged": "^4.0.1",
     "nodemon": "^1.11.0",
     "np": "^2.16.0",
+    "prettier": "^1.5.2",
     "rimraf": "^2.6.1",
     "typescript": "^2.4.1"
   },
@@ -61,6 +66,12 @@
     ],
     "transformIgnorePatterns": [
       "<rootDir>/node_modules/(?!chrome-launcher)"
+    ]
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --single-quote --trailing-comma all --write",
+      "git add"
     ]
   }
 }

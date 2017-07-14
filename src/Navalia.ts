@@ -47,7 +47,7 @@ export class Navalia {
     for (let i = 0; i < this.numInstances; i++) {
       this.launchInstance(this.chromeOptions);
     }
-    
+
     return;
   }
 
@@ -55,7 +55,9 @@ export class Navalia {
     const instanceIndex = this.chromeInstances.indexOf(chrome);
 
     if (!chrome.isIdle()) {
-      log(`instance ${chrome.port} still has active work, waiting till finished`);
+      log(
+        `instance ${chrome.port} still has active work, waiting till finished`,
+      );
       chrome.setExpired();
       return;
     }
@@ -81,7 +83,9 @@ export class Navalia {
     queueItem: queueItem | undefined,
   ): Promise<any> {
     if (!chrome || (!queueItem || !queueItem.handler)) {
-      throw new Error(`#execute was called with no instance of Chrome or a Job`);
+      throw new Error(
+        `#execute was called with no instance of Chrome or a Job`,
+      );
     }
 
     const tab = await chrome.start();
@@ -100,7 +104,9 @@ export class Navalia {
     log(`instance ${chrome.port} has completed work`);
 
     if (chrome.isFull()) {
-      log(`instance ${chrome.port} at max capacity, not taking work from queue`);
+      log(
+        `instance ${chrome.port} at max capacity, not taking work from queue`,
+      );
       this.destroy(chrome);
       return;
     }
@@ -142,7 +148,7 @@ export class Navalia {
 
   public async kill(): Promise<void[]> {
     log(`:kill() > killing all instances regardless of work-in-progress`);
-    return Promise.all(this.chromeInstances.map((chrome) => chrome.quit()));
+    return Promise.all(this.chromeInstances.map(chrome => chrome.quit()));
   }
 
   public run(handler: jobFunc): Promise<any> {
@@ -159,7 +165,11 @@ export class Navalia {
 
       // Otherwise just push it through
       log('instances are available and starting');
-      this.execute(this.chromeInstances.find(notBusy), { handler, resolve, reject });
+      this.execute(this.chromeInstances.find(notBusy), {
+        handler,
+        resolve,
+        reject,
+      });
     });
   }
-};
+}
