@@ -211,7 +211,7 @@ export class Chrome extends EventEmitter {
     const script = `
       (() => {
         const result = (${String(expression)}).apply(null, ${JSON.stringify(args)});
-        if (result.then) {
+        if (result && result.then) {
           result.catch((error) => { throw new Error(error); });
           return result;
         }
@@ -308,6 +308,20 @@ export class Chrome extends EventEmitter {
     const { outerHTML } = await cdp.DOM.getOuterHTML({ nodeId });
 
     return outerHTML;
+  }
+
+  public async text(selector: string = 'body'): Promise<string | null> {
+    log(`:text() > getting '${selector}' text`);
+    
+    const text = await this.evaluate((selector) => {
+      const ele = document.querySelector(selector);
+      if (ele) {
+        return ele.textContent;
+      }
+      return null;
+    }, selector);
+
+    return text;
   }
 
   public async fetch(...args): Promise<any> {
