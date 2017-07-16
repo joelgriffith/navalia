@@ -589,7 +589,7 @@ export class Chrome extends EventEmitter {
     await cdp.CSS.stopRuleUsageTracking();
 
     if (!jsCoverage && !styleSheet) {
-      const error = new Error(`Couldn't locat script ${src} on the page.`);
+      const error = new Error(`Couldn't locate script ${src} on the page.`);
       log(`:coverage() > ${src} not found on the page.`);
       if (config.throw) {
         throw error;
