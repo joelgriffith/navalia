@@ -74,6 +74,7 @@ function waitForElement(selector, timeout) {
 export class Chrome extends EventEmitter {
   private cdp?: chromeUtil.cdp;
   private flags?: chromeUtil.flags;
+  private styleSheetsLoaded: any[];
   private kill: () => Promise<{}>;
 
   constructor(opts: options = {}) {
@@ -81,6 +82,7 @@ export class Chrome extends EventEmitter {
 
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
+    this.styleSheetsLoaded = [];
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -199,6 +201,11 @@ export class Chrome extends EventEmitter {
       log(`:goto() > gathering coverage for ${url}`);
       await cdp.Profiler.enable();
       await cdp.Profiler.startPreciseCoverage();
+      await cdp.CSS.startRuleUsageTracking();
+
+      cdp.CSS.styleSheetAdded(param => {
+        this.styleSheetsLoaded.push(param.header);
+      });
     }
 
     log(`:goto() > going to ${url}`);
@@ -336,11 +343,14 @@ export class Chrome extends EventEmitter {
   public async fetch(...args): Promise<any> {
     const cdp = await this.getChromeCDP();
 
+    log(`:fetch() > fetching resource with args: ${JSON.stringify(args)}`);
+
     let requestFound = false;
     let requestHasResponded = false;
     let requestId = null;
     let response = {};
 
+    // Might move these into a private helper...
     cdp.Network.requestWillBeSent(params => {
       if (requestFound) return;
 
@@ -554,27 +564,68 @@ export class Chrome extends EventEmitter {
 
   public async coverage(
     src: string,
+    config = { throw: true },
   ): Promise<{ total: number; unused: number; percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
-    log(`:coverage() > getting coverage stats for ${src}`);
-    const res = await cdp.Profiler.takePreciseCoverage();
-    await cdp.Profiler.stopPreciseCoverage();
 
-    const scriptCoverage = res.result.find(
+    log(`:coverage() > getting coverage stats for ${src}`);
+
+    // JS and CSS have similar data-structs, but are
+    // retrieved via different mechanisms
+    const jsCoverages = await cdp.Profiler.takePreciseCoverage();
+    const jsCoverage = jsCoverages.result.find(
       scriptCoverage => scriptCoverage.url === src,
     );
 
-    if (!scriptCoverage) {
+    const styleSheet = this.styleSheetsLoaded.find(
+      css => css.sourceURL === src,
+    );
+    const { coverage: cssCoverages } = await cdp.CSS.takeCoverageDelta();
+
+    const startingResults = { total: 0, unused: 0 };
+
+    // Stop monitors
+    await cdp.Profiler.stopPreciseCoverage();
+    await cdp.CSS.stopRuleUsageTracking();
+
+    if (!jsCoverage && !styleSheet) {
+      const error = new Error(`Couldn't locate script ${src} on the page.`);
       log(`:coverage() > ${src} not found on the page.`);
-      return new Error(`Couldn't locat script ${src} on the page.`);
+      if (config.throw) {
+        throw error;
+      }
+      return error;
     }
 
-    if (
-      scriptCoverage &&
-      scriptCoverage.functions &&
-      scriptCoverage.functions.length
-    ) {
-      const coverageData = scriptCoverage.functions.reduce(
+    if (styleSheet && styleSheet.styleSheetId) {
+      const coverageCollection = cssCoverages.filter(
+        coverage => coverage.styleSheetId === styleSheet.styleSheetId,
+      );
+      const usedInfo = coverageCollection.reduce(
+        (rangeAccum, range) => {
+          const total =
+            range.endOffset > rangeAccum.total
+              ? range.endOffset
+              : rangeAccum.total;
+          const used = range.used ? range.endOffset - range.startOffset : 0;
+
+          return {
+            total,
+            used: rangeAccum.used + used,
+          };
+        },
+        { total: 0, used: 0 },
+      );
+
+      return {
+        total: usedInfo.total,
+        unused: usedInfo.total - usedInfo.used,
+        percentUnused: (usedInfo.total - usedInfo.used) / usedInfo.total,
+      };
+    }
+
+    if (jsCoverage && jsCoverage.functions && jsCoverage.functions.length) {
+      const coverageData = jsCoverage.functions.reduce(
         (fnAccum, coverageStats) => {
           const functionStats = coverageStats.ranges.reduce(
             (rangeAccum, range) => {
@@ -588,10 +639,7 @@ export class Chrome extends EventEmitter {
                   (range.count === 0 ? range.endOffset - range.startOffset : 0),
               };
             },
-            {
-              total: 0,
-              unused: 0,
-            },
+            startingResults,
           );
 
           return {
@@ -602,10 +650,7 @@ export class Chrome extends EventEmitter {
             unused: fnAccum.unused + functionStats.unused,
           };
         },
-        {
-          total: 0,
-          unused: 0,
-        },
+        startingResults,
       );
 
       return {
