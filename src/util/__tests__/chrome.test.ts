@@ -1,21 +1,23 @@
 jest.mock('chrome-launcher');
-jest.mock('chrome-remote-interface', () => () => Promise.resolve({
-  Page: {
-    enable: jest.fn(),
-  },
-  Runtime: {
-    enable: jest.fn(),
-  },
-  Network: {
-    enable: jest.fn(),
-  },
-  DOM: {
-    enable: jest.fn(),
-  },
-  CSS: {
-    enable: jest.fn(),
-  },
-}));
+jest.mock('chrome-remote-interface', () => () =>
+  Promise.resolve({
+    Page: {
+      enable: jest.fn(),
+    },
+    Runtime: {
+      enable: jest.fn(),
+    },
+    Network: {
+      enable: jest.fn(),
+    },
+    DOM: {
+      enable: jest.fn(),
+    },
+    CSS: {
+      enable: jest.fn(),
+    },
+  }),
+);
 
 import * as chromeLauncher from 'chrome-launcher';
 import {
@@ -43,14 +45,16 @@ describe('chrome utils', () => {
       },
       Emulation: {},
       Profiler: {},
-      Input: {},    
+      Input: {},
     };
 
     it('should return the tab and targetId', () => {
-      cdp.Target.createBrowserContext = jest.fn(() => ({browserContextId: 1234}));
-      cdp.Target.createTarget = jest.fn(() => ({targetId: 'targetId'}));
+      cdp.Target.createBrowserContext = jest.fn(() => ({
+        browserContextId: 1234,
+      }));
+      cdp.Target.createTarget = jest.fn(() => ({ targetId: 'targetId' }));
 
-      return createTab(cdp, 8000).then(({tab, targetId}) => {
+      return createTab(cdp, 8000).then(({ tab, targetId }) => {
         expect(cdp.Target.createBrowserContext).toHaveBeenCalled();
         expect(cdp.Target.createTarget).toHaveBeenCalledWith({
           url: 'about:blank',
@@ -73,7 +77,7 @@ describe('chrome utils', () => {
       const mockBrowser = { port: 1243 };
       chromeLauncher.launch = jest.fn(() => Promise.resolve(mockBrowser));
 
-      return launch(defaultFlags).then(({browser, cdp}) => {
+      return launch(defaultFlags).then(({ browser, cdp }) => {
         expect(chromeLauncher.launch).toHaveBeenCalledWith({
           chromeFlags: transformChromeFlags(defaultFlags),
           logLevel: 'silent',
@@ -93,7 +97,7 @@ describe('chrome utils', () => {
       const mockBrowser = { port: 1243 };
       chromeLauncher.launch = jest.fn(() => Promise.resolve(mockBrowser));
 
-      return launch(defaultFlags, true).then(({browser, cdp}) => {
+      return launch(defaultFlags, true).then(({ browser, cdp }) => {
         expect(chromeLauncher.launch).toHaveBeenCalledWith({
           chromeFlags: transformChromeFlags(defaultFlags),
           logLevel: 'silent',
