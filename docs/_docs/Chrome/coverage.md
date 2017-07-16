@@ -11,7 +11,7 @@ This async method will return an object with these properties:
 - `unused` The total unused bytes.
 - `percentUnused` A floating-point number representing the percentage unused.
 
-> It's likely that the Chrome browsers's Coverage tab will report different percent numbers than Navalia. This is largely due to _when_ you collect coverage information as more interactions on a page will return lower percentage of unused code. If see wildly different percentages please file an issue.
+> It's likely that the Chrome browsers's Coverage tab will report different percent numbers than Navalia. This is largely due to _when_ you collect coverage information as more interactions on a page will return lower percentage of unused code. If you see wildly different percentages please file an issue.
 
 *JavaScript*
 ```js
