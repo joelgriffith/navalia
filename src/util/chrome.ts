@@ -7,28 +7,28 @@ export interface flags {
 }
 
 export interface cdp {
-  Page: any,
-  Runtime: any,
-  Network: any,
-  DOM: any,
-  CSS: any,
-  Target: any,
-  Emulation: any,
-  Profiler: any,
-  Input: any,
+  Page: any;
+  Runtime: any;
+  Network: any;
+  DOM: any;
+  CSS: any;
+  Target: any;
+  Emulation: any;
+  Profiler: any;
+  Input: any;
 }
 
 export interface tab {
-  tab: any,
-  targetId: string,
+  tab: any;
+  targetId: string;
 }
 
 export interface chromeInstance {
-  browser: chromeLauncher.LaunchedChrome,
-  cdp: cdp,
+  browser: chromeLauncher.LaunchedChrome;
+  cdp: cdp;
 }
 
-export const defaultFlags:flags = {
+export const defaultFlags: flags = {
   headless: true,
   disableGpu: true,
   hideScrollbars: true,
@@ -36,17 +36,22 @@ export const defaultFlags:flags = {
 
 export const transformChromeFlags = (flags: flags) => {
   return _.chain(flags)
-    .pickBy((value) => value)
+    .pickBy(value => value)
     .map((_value, key) => `--${_.kebabCase(key)}`)
     .value();
 };
 
-// Contains all the business 
-export const launch = async(flags: flags, isHost: boolean = false): Promise<chromeInstance> => {
-  const logLevel = process.env.DEBUG && (
-    process.env.DEBUG.includes('ChromeLauncher') ||
-    process.env.DEBUG.includes('*')
-  ) ? 'info' : 'silent';
+// Contains all the business
+export const launch = async (
+  flags: flags,
+  isHost: boolean = false,
+): Promise<chromeInstance> => {
+  const logLevel =
+    process.env.DEBUG &&
+    (process.env.DEBUG.includes('ChromeLauncher') ||
+      process.env.DEBUG.includes('*'))
+      ? 'info'
+      : 'silent';
 
   const chromeFlags = transformChromeFlags(flags);
 
@@ -56,14 +61,20 @@ export const launch = async(flags: flags, isHost: boolean = false): Promise<chro
     logLevel,
   });
 
-  const cdp: cdp = isHost ? 
-    await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` }) :
-    await CDP({ port: browser.port });
+  const cdp: cdp = isHost
+    ? await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` })
+    : await CDP({ port: browser.port });
 
   await Promise.all(
-    isHost ?
-      [] :
-      [ cdp.Page.enable(), cdp.Runtime.enable(), cdp.Network.enable(), cdp.DOM.enable(), cdp.CSS.enable() ]
+    isHost
+      ? []
+      : [
+          cdp.Page.enable(),
+          cdp.Runtime.enable(),
+          cdp.Network.enable(),
+          cdp.DOM.enable(),
+          cdp.CSS.enable(),
+        ],
   );
 
   // Return both the browser and the CDP instance
@@ -71,18 +82,20 @@ export const launch = async(flags: flags, isHost: boolean = false): Promise<chro
     browser,
     cdp,
   };
-}
+};
 
 export const createTab = async (cdp: cdp, port: number): Promise<tab> => {
   const { browserContextId } = cdp.Target.createBrowserContext();
 
   const { targetId } = await cdp.Target.createTarget({
     url: 'about:blank',
-    browserContextId
+    browserContextId,
   });
 
   // connct to the new context
-  const tab: cdp = await CDP({ tab: `ws://localhost:${port}/devtools/page/${targetId}` });
+  const tab: cdp = await CDP({
+    tab: `ws://localhost:${port}/devtools/page/${targetId}`,
+  });
 
   // Enable all the domains on the tab
   await Promise.all([
@@ -97,4 +110,4 @@ export const createTab = async (cdp: cdp, port: number): Promise<tab> => {
     tab,
     targetId,
   };
-}
+};

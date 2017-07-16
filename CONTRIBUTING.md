@@ -97,6 +97,10 @@ This is effectively sugar over using the TypeScript `ts` global to execute scrip
 
 At the time of this writing the majority of the API has no automated test suite. Once we reach a point of higher test-coverage contributors will need to submit tests with any new feature. Tests are written in `Jest`, and can detailed docs on that test-runner can be found [here](https://facebook.github.io/jest/docs/api.html).
 
+**Prettier**
+
+Navalia will run `prettier` prior to commits being added (when `git add`ing files). This is done to achieve consistent formatting and ensure the repo maintains a level of quality in code preservation.
+
 ## Be Nice
 
 It's quite sad that this still has to be cited for open-source projects, but be nice! You might be frustrated by lack of support or features, but it's possible that contributor/maintainer lost a loved-one or something else terrible. It's impossible to see the invisible burdens people carry, so let's give each other the benefit of the doubt and allow room for us humans (and cats).

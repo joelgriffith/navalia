@@ -29,7 +29,11 @@ export class ChromeHelper {
     this.maxActiveTabs = options.maxActiveTabs || -1;
     this.flags = options.flags || chromeUtil.defaultFlags;
 
-    log(`using up to ${this.maxActiveTabs === -1 ? 'infinite' : this.maxActiveTabs} tabs`);
+    log(
+      `using up to ${this.maxActiveTabs === -1
+        ? 'infinite'
+        : this.maxActiveTabs} tabs`,
+    );
   }
 
   public async start(): Promise<Chrome> {
@@ -50,11 +54,15 @@ export class ChromeHelper {
 
     const { tab, targetId } = await chromeUtil.createTab(this.cdp, this.port);
 
-    log(`chrome on ${this.port} launched a new tab at ${targetId}. current tabs: ${this.activeTabs}`);
+    log(
+      `chrome on ${this
+        .port} launched a new tab at ${targetId}. current tabs: ${this
+        .activeTabs}`,
+    );
 
     const newTab = new Chrome({
       cdp: tab,
-      flags: this.flags || chromeUtil.defaultFlags
+      flags: this.flags || chromeUtil.defaultFlags,
     });
 
     newTab.on(events.done, this.onTabClose.bind(this, targetId));
@@ -66,7 +74,10 @@ export class ChromeHelper {
     this.cdp.Target.closeTarget({ targetId });
     this.activeTabs--;
     this.jobsComplete++;
-    log(`chrome on ${this.port} tab ${targetId} has closed. active tabs: ${this.activeTabs}, completed jobs: ${this.jobsComplete}`);
+    log(
+      `chrome on ${this.port} tab ${targetId} has closed. active tabs: ${this
+        .activeTabs}, completed jobs: ${this.jobsComplete}`,
+    );
   }
 
   public async quit(): Promise<void> {
@@ -77,7 +88,10 @@ export class ChromeHelper {
   }
 
   public setExpired(): void {
-    log(`chrome on ${this.port} has been set expired, active tabs: ${this.activeTabs}`);
+    log(
+      `chrome on ${this.port} has been set expired, active tabs: ${this
+        .activeTabs}`,
+    );
     this.isExpired = true;
   }
 
