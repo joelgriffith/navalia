@@ -543,42 +543,67 @@ export class Chrome extends EventEmitter {
     return cdp.Page.loadEventFired();
   }
 
-  public async coverage(src: string): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
+  public async coverage(src: string, config = { throw: true }): Promise<{ total: number, unused: number, percentUnused: number } | Error> {
     const cdp = await this.getChromeCDP();
+
     log(`:coverage() > getting coverage stats for ${src}`);
 
+    // JS and CSS have similar data-structs, but are
+    // retrieved via different mechanisms
     const jsCoverages = await cdp.Profiler.takePreciseCoverage();
-    const cssCoverages = await cdp.CSS.stopRuleUsageTracking();
-    console.log(cssCoverages);
+    const jsCoverage = jsCoverages.result.find((scriptCoverage) => scriptCoverage.url === src);
+
+    const styleSheet = this.styleSheetsLoaded.find((css) => css.sourceURL === src);
+    const { coverage: cssCoverages } = await cdp.CSS.takeCoverageDelta();
+
+    const startingResults = { total: 0, unused: 0 };
+
+    // Stop monitors
     await cdp.Profiler.stopPreciseCoverage();
+    await cdp.CSS.stopRuleUsageTracking();
 
-    const scriptCoverage = jsCoverages.result.find((scriptCoverage) => scriptCoverage.url === src);
-
-    if (!scriptCoverage) {
+    if (!jsCoverage && !styleSheet) {
+      const error = new Error(`Couldn't locat script ${src} on the page.`);
       log(`:coverage() > ${src} not found on the page.`);
-      return new Error(`Couldn't locat script ${src} on the page.`);
+      if (config.throw) {
+        throw error;
+      }
+      return error;
     }
 
-    if (scriptCoverage && scriptCoverage.functions && scriptCoverage.functions.length) {
-      const coverageData = scriptCoverage.functions.reduce((fnAccum, coverageStats) => {
+    if (styleSheet && styleSheet.styleSheetId) {
+      const coverageCollection = cssCoverages.filter((coverage) => coverage.styleSheetId === styleSheet.styleSheetId);
+      const usedInfo =  coverageCollection.reduce((rangeAccum, range) => {
+        const total = range.endOffset > rangeAccum.total ? range.endOffset : rangeAccum.total;
+        const used = range.used ? (range.endOffset - range.startOffset) : 0;
+
+        return {
+          total,
+          used: rangeAccum.used + used, 
+        };
+      }, { total: 0, used: 0 });
+
+      return {
+        total: usedInfo.total,
+        unused: usedInfo.total - usedInfo.used,
+        percentUnused: (usedInfo.total - usedInfo.used) / usedInfo.total ,
+      };
+    }
+
+    if (jsCoverage && jsCoverage.functions && jsCoverage.functions.length) {
+      const coverageData = jsCoverage.functions.reduce((fnAccum, coverageStats) => {
         const functionStats = coverageStats.ranges.reduce((rangeAccum, range) => {
           return {
             total: range.endOffset > rangeAccum.total ? range.endOffset : rangeAccum.total,
             unused: rangeAccum.unused + (range.count === 0 ? (range.endOffset - range.startOffset) : 0),
           };
-        }, {
-          total: 0,
-          unused: 0,
-        });
+        }, startingResults);
 
         return {
           total: functionStats.total > fnAccum.total ? functionStats.total : fnAccum.total,
           unused: fnAccum.unused + functionStats.unused,
         };
-      }, {
-        total: 0,
-        unused: 0,
-      });
+      }, startingResults);
       
       return {
         ...coverageData,
