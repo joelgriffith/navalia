@@ -1,3 +1,12 @@
+# 0.0.21
+
+## Features
+- `coverage` now works for CSS!
+- We now use `prettier`, and this _will_ run on commits to ensure some level of formatting/consistency is there.
+
+## Fixes
+- Some small bugfixes and better logging.
+
 # 0.0.20
 
 ## Features
