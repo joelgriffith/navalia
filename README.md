@@ -3,6 +3,7 @@
 [![npm version](https://badge.fury.io/js/navalia.svg)](https://badge.fury.io/js/navalia)
 [![Build Status](https://travis-ci.org/joelgriffith/navalia.svg?branch=master)](https://travis-ci.org/joelgriffith/navalia)
 [![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
+[![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
 `npm install --save navalia`
 
