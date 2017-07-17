@@ -1,3 +1,9 @@
+# 0.0.22
+
+## Features
+- New `attr` API that follows the same signature as jQuery's.
+- New `cookie` API that allows for interacting with site cookies.
+
 # 0.0.21
 
 ## Features
