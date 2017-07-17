@@ -584,11 +584,7 @@ export class Chrome extends EventEmitter {
       return cookie ? cookie.value : null;
     }
 
-    return cookies.reduce((accum, cookie) => {
-      return Object.assign({}, accum, {
-        [cookie.name]: cookie.value,
-      });
-    }, {});
+    return cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));
   }
 
   public async attr(
