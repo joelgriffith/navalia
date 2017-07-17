@@ -562,6 +562,54 @@ export class Chrome extends EventEmitter {
     return cdp.Page.loadEventFired();
   }
 
+  public async cookie(name?: string, value?: string): Promise<any> {
+    const cdp = await this.getChromeCDP();
+
+    log(
+      `:cookie() > ${value
+        ? `setting cookie ${name} to ${value}`
+        : name ? `getting cookie ${name}` : `getting all cookies`}`,
+    );
+
+    const { cookies } = await cdp.Network.getAllCookies();
+
+    if (value) {
+      const url = await this.evaluate(() => window.location.href);
+      const isSet = await cdp.Network.setCookie({ url, name, value });
+      return isSet ? value : null;
+    }
+
+    if (name) {
+      const cookie = cookies.find(cookie => cookie.name === name);
+      return cookie ? cookie.value : null;
+    }
+
+    return cookies.reduce((accum, cookie) => {
+      return Object.assign({}, accum, {
+        [cookie.name]: cookie.value,
+      });
+    }, {});
+  }
+
+  public async attr(
+    selector: string,
+    attribute: string,
+  ): Promise<string | void> {
+    return this.evaluate(
+      (selector, attribute) => {
+        const ele = document.querySelector(selector);
+
+        if (ele) {
+          return ele.getAttribute(attribute);
+        }
+
+        return null;
+      },
+      selector,
+      attribute,
+    );
+  }
+
   public async coverage(
     src: string,
     config = { throw: true },
