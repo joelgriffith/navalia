@@ -5,7 +5,7 @@ category: Chrome
 
 The `cookie` method acts as a getter/setter for accessing and setting cookies.
 
-When executed with no arguments, the `cookie` method will return an objects representing the browser cookies. They will contain a `name` property (the name of the cookie) and it's respective value.
+When executed with no arguments, the `cookie` method will return an array of objects representing the sites cookies. They will contain a `name` property (the name of the cookie) and its respective value.
 
 When called with a single argument, or the cookie name, this method will return the value for the cookie requested.
 
@@ -13,10 +13,10 @@ When called wth two arguments (representing the name and value of a cookie), thi
 
 *JavaScript*
 ```js
-// Getting all cookies
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
+// Getting all cookies
 chrome.goto('https://www.google.com')
 .then(() => chrome.cookie())
 .then((cookies) => console.log(cookies))
@@ -48,6 +48,7 @@ async function getAll() {
   chrome.done();
 }
 
+// Getting a single cookie
 async function getSessionId() {
   await chrome.goto('https://www.google.com');
   const cookie = await chrome.cookie('session_id');
@@ -55,6 +56,7 @@ async function getSessionId() {
   chrome.done();
 }
 
+// Setting the sesion_id cookie
 async function setSession() {
   await chrome.goto('https://www.google.com');
   const cookie = await chrome.cookie('session_id', '1234');
