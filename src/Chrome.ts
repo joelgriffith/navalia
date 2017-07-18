@@ -191,7 +191,7 @@ export class Chrome extends EventEmitter {
   public async goto(
     url: string,
     opts: navigateOpts = pageloadOpts,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     const waitForPageload = opts.onload === undefined ? true : opts.onload;
@@ -215,9 +215,10 @@ export class Chrome extends EventEmitter {
     if (waitForPageload) {
       log(`:goto() > waiting for pageload on ${url}`);
       await cdp.Page.loadEventFired();
+      return true;
     }
 
-    return;
+    return true;
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
@@ -275,10 +276,7 @@ export class Chrome extends EventEmitter {
     return buffer;
   }
 
-  public async pdf(filePath: string): Promise<any> {
-    if (!path.isAbsolute(filePath)) {
-      throw new Error(`Filepath is not absolute: ${filePath}`);
-    }
+  public async pdf(filePath: string): Promise<void | Buffer> {
     const cdp = await this.getChromeCDP();
 
     log(`:pdf() > saving PDF to ${filePath}`);
@@ -286,22 +284,32 @@ export class Chrome extends EventEmitter {
     const base64Image = await cdp.Page.printToPDF();
     const buffer = new Buffer(base64Image.data, 'base64');
 
-    return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    if (filePath) {
+      if (!path.isAbsolute(filePath)) {
+        throw new Error(`Filepath is not absolute: ${filePath}`);
+      }
+
+      return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    }
+
+    return buffer;
   }
 
-  public async size(width: number, height: number): Promise<any> {
+  public async size(width: number, height: number): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     log(`:size() > setting window size to ${width}x${height}`);
 
     await cdp.Emulation.setVisibleSize({ width, height });
-    return cdp.Emulation.setDeviceMetricsOverride({
+    await cdp.Emulation.setDeviceMetricsOverride({
       width,
       height,
       deviceScaleFactor: 0,
       mobile: false,
       fitWindow: true,
     });
+
+    return true;
   }
 
   public async exists(selector: string): Promise<boolean> {
@@ -405,31 +413,34 @@ export class Chrome extends EventEmitter {
     });
   }
 
-  public async save(filePath: string): Promise<boolean> {
-    if (!path.isAbsolute(filePath)) {
-      throw new Error(`Filepath is not absolute: ${filePath}`);
-    }
+  public async save(filePath?: string): Promise<boolean | string | null> {
     log(`:save() > saving page HTML to ${filePath}`);
 
     const html = await this.html();
 
-    try {
-      fs.writeFileSync(filePath, html);
-      log(`:save() > page HTML saved successfully to ${filePath}`);
-      return true;
-    } catch (error) {
-      log(`:save() > page HTML failed ${error.message}`);
-      return false;
+    if (filePath) {
+      try {
+        fs.writeFileSync(filePath, html);
+        log(`:save() > page HTML saved successfully to ${filePath}`);
+        return true;
+      } catch (error) {
+        log(`:save() > page HTML failed ${error.message}`);
+        return false;
+      }
     }
+
+    return html;
   }
 
-  public async click(selector: string): Promise<void> {
+  public async click(selector: string): Promise<boolean> {
     log(`:click() > clicking '${selector}'`);
 
-    return this.trigger('click', selector);
+    await this.trigger('click', selector);
+
+    return true;
   }
 
-  public async focus(selector: string): Promise<void> {
+  public async focus(selector: string): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     log(`:focus() > focusing '${selector}'`);
@@ -440,10 +451,12 @@ export class Chrome extends EventEmitter {
       nodeId,
     });
 
-    return cdp.DOM.focus({ nodeId: foundNode });
+    await cdp.DOM.focus({ nodeId: foundNode });
+
+    return true;
   }
 
-  public async type(selector: string, value: string): Promise<{}> {
+  public async type(selector: string, value: string): Promise<boolean> {
     log(`:type() > typing'${value}' into '${selector}'`);
 
     // Focus on the selector
@@ -451,42 +464,50 @@ export class Chrome extends EventEmitter {
 
     const keys = value.split('') || [];
 
-    return Promise.all(
+    await Promise.all(
       keys.map(async key => this.simulateKeyPress('char', key)),
     );
+
+    return true;
   }
 
-  public async check(selector: string): Promise<void> {
+  public async check(selector: string): Promise<boolean> {
     log(`:check() > checking checkbox '${selector}'`);
 
-    return this.evaluate(selector => {
+    await this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = true;
       }
     }, selector);
+
+    return true;
   }
 
-  public async uncheck(selector: string): Promise<void> {
+  public async uncheck(selector: string): Promise<boolean> {
     log(`:uncheck() > un-checking checkbox '${selector}'`);
 
-    return this.evaluate(selector => {
+    await this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = false;
       }
     }, selector);
+
+    return true;
   }
 
-  public async select(selector: string, option: string): Promise<void> {
+  public async select(selector: string, option: string): Promise<boolean> {
     log(`:select() > selecting option '${option}' in '${selector}'`);
 
-    return this.evaluate(selector => {
+    await this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.value = option;
       }
     }, selector);
+
+    return true;
   }
 
   public async visible(selector: string): Promise<boolean> {
@@ -524,7 +545,9 @@ export class Chrome extends EventEmitter {
 
     log(`:wait() > waiting for selector "${waitParam}" to be inserted`);
 
-    return this.evaluate(waitForElement, waitParam, defaultTimeout);
+    await this.evaluate(waitForElement, waitParam, defaultTimeout);
+
+    return true;
   }
 
   public async inject(src: string): Promise<boolean> {
@@ -554,12 +577,14 @@ export class Chrome extends EventEmitter {
     return false;
   }
 
-  public async pageload(): Promise<void> {
+  public async pageload(): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     log(`:pageload() > waiting for pageload to be called`);
 
-    return cdp.Page.loadEventFired();
+    await cdp.Page.loadEventFired();
+
+    return true;
   }
 
   public async cookie(name?: string, value?: string): Promise<any> {
@@ -576,12 +601,12 @@ export class Chrome extends EventEmitter {
     if (value) {
       const url = await this.evaluate(() => window.location.href);
       const isSet = await cdp.Network.setCookie({ url, name, value });
-      return isSet ? value : null;
+      return isSet ? [{ name, value }] : null;
     }
 
     if (name) {
       const cookie = cookies.find(cookie => cookie.name === name);
-      return cookie ? cookie.value : null;
+      return cookie ? [{ name, value: cookie.value }] : null;
     }
 
     return cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));
@@ -590,7 +615,7 @@ export class Chrome extends EventEmitter {
   public async attr(
     selector: string,
     attribute: string,
-  ): Promise<string | void> {
+  ): Promise<string | null> {
     return this.evaluate(
       (selector, attribute) => {
         const ele = document.querySelector(selector);
