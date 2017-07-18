@@ -13,7 +13,7 @@ export const html = {
     const { loader } = context;
 
     return loader.run(chrome => {
-      return chrome.focus(args.html);
+      return chrome.html(args.selector);
     });
   },
 };

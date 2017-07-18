@@ -1,6 +1,6 @@
-import { GraphQLBoolean, GraphQLString, GraphQLNumber } from 'graphql';
+import { GraphQLBoolean, GraphQLString, GraphQLFloat } from 'graphql';
 
-export const visible = {
+export const wait = {
   type: GraphQLBoolean,
   description: `The wait method accepts either a selector to wait for, or time in MS, before allowing Chrome to continue execution.`,
   args: {
@@ -10,7 +10,7 @@ export const visible = {
     },
     time: {
       description: `The time to wait in milli-seconds`,
-      type: GraphQLNumber,
+      type: GraphQLFloat,
     },
   },
   resolve(_, args, context) {

@@ -315,7 +315,10 @@ export class Chrome extends EventEmitter {
   public async exists(selector: string): Promise<boolean> {
     log(`:exists() > checking if '${selector}' exists`);
 
-    return !!await this.getSelectorId(selector);
+    return this.evaluate(selector => {
+      const ele = document.querySelector(selector);
+      return !!ele;
+    }, selector);
   }
 
   public async html(selector: string = 'html'): Promise<string | null> {

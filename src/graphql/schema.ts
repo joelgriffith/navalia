@@ -16,6 +16,7 @@ import { screenshot } from './types/screenshot';
 import { text } from './types/text';
 import { type } from './types/type';
 import { uncheck } from './types/uncheck';
+import { wait } from './types/wait';
 
 export const schema = new GraphQLSchema({
   query: new GraphQLObjectType({
@@ -38,6 +39,7 @@ export const schema = new GraphQLSchema({
       text,
       type,
       uncheck,
+      wait,
     }),
   }),
 });
