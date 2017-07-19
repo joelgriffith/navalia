@@ -8,6 +8,7 @@ const log = debug('navalia:chrome-helper');
 export interface options {
   maxActiveTabs?: number;
   flags?: chromeUtil.flags;
+  defaultTimeout?: number;
 }
 
 export class ChromeHelper {
@@ -19,6 +20,7 @@ export class ChromeHelper {
   private kill: Function;
   private flags: chromeUtil.flags;
   private jobsComplete: number;
+  private defaultTimeout: number;
 
   public port: number;
 
@@ -28,6 +30,7 @@ export class ChromeHelper {
     this.activeTabs = 0;
     this.maxActiveTabs = options.maxActiveTabs || -1;
     this.flags = options.flags || chromeUtil.defaultFlags;
+    this.defaultTimeout = options.defaultTimeout || 10000;
 
     log(
       `using up to ${this.maxActiveTabs === -1
@@ -63,6 +66,7 @@ export class ChromeHelper {
     const newTab = new Chrome({
       cdp: tab,
       flags: this.flags || chromeUtil.defaultFlags,
+      timeout: this.defaultTimeout,
     });
 
     newTab.on(events.done, this.onTabClose.bind(this, targetId));

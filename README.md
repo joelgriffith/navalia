@@ -5,69 +5,35 @@
 [![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
 [![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
-`npm install --save navalia`
+```bash
+$ npm i -g navalia
+$ navalia --port 5000
+```
 
-[View the documentation here](https://joelgriffith.github.io/navalia/)
+![NavaliaQL](./assets/NavaliaQL.gif)
 
-Automate and scale browser workflows with a sane API. Navalia exports a handy `Navalia` module that acts as browser-load balancer, as well as a `Chrome` module that you can use for an easier experience.
+Drive a headless browser with ease by using GraphQL. Navalia exposes both a GraphQL front-end and a set of modules for painless browser automation. There's no clunky API to learn or plugins to install.
 
-## Usage
+## Features
 
-- [Functional Testing](https://codeburst.io/composable-end-to-end-tests-for-react-apps-2ec82170af62)
+- Scrape webpage data, even from JavaScript-heavy sites.
+- Run automated functional tests.
+- Discover visual regressions in your site.
+- Capture screenshots, pdfs, execute javascript, insert text, and more.
+- Use any runtime or framework you want!
 
-- [Website Code Coverage](https://codeburst.io/capturing-unused-application-code-2b7594a9fe06)
+[View the library documentation here](https://joelgriffith.github.io/navalia/)
+
+[Install the npm module to run the GraphiQL client](https://www.npmjs.com/package/navalia)
 
 **BETA WARNING**
 This project heavily relies on bleeding-edge technology, as such the API and internals will likely change from time to time. I heavily recommend that you install `Chrome Canary` to capture the latest and greatest the browser has to offer.
 
-## Features
+## Recipes
 
-- Runs and controls multiple instances of particular browser (currently Chrome).
-- Capture screenshots, pdfs, execute javascript, insert text, and more.
-- Queue work automatically when all instances are busy.
-- Uses a simple, easy to understand API.
-- Work can easily span over multiple pages or complex interactions.
-- Set timers and max-jobs limitations on browsers, forcing them to reboot for easier memory management.
+- [Functional Testing](https://codeburst.io/composable-end-to-end-tests-for-react-apps-2ec82170af62)
 
-## Navalia Example
-```javascript
-// Navalia manages browser instances
-// and can jobs can be queued against it
-const { Navalia } = require('Navalia');
-const navalia = new Navalia();
-
-navalia.register((chrome) => {
-  return chrome.goto('http://www.google.com/')
-    .then(() => chrome.pdf('/Users/jgriffith/Downloads/google.pdf'));
-});
-
-navalia.register((chrome) => {
-  return chrome.goto('http://www.facebook.com/')
-    .then(() => chrome.pdf('/Users/jgriffith/Downloads/facebook.pdf'));
-});
-```
-
-## Chrome Example
-```ts
-// Simple, easy to use Chrome wrapper
-import { Chrome } from 'navalia';
-
-const chrome = new Chrome();
-
-async function screenshotHN() {
-  await chrome.goto('https://news.ycombinator.com/');
-  await chrome.click('a')
-  await chrome.wait(500);
-  await chrome.screenshot('/Users/jgriffith/Downloads/hn.png');
-  return chrome.done();
-}
-
-screenshotHN();
-```
-
-## More Examples
-
-Looking for more? [Check out the docs](https://joelgriffith.github.io/navalia/).
+- [Website Code Coverage](https://codeburst.io/capturing-unused-application-code-2b7594a9fe06)
 
 ## Roadmap
 
@@ -76,7 +42,7 @@ In no particular order, this is the vision of navalia going forward:
 - [X] Expanded browser API (pdf rendering, network watching, more).
 - [ ] Bring more vendors onto the framework.
 - [ ] Better typings around externals with no @type support.
-- [ ] Parameterization on killing long-running jobs.
+- [X] Parameterization on killing long-running jobs.
 - [ ] Unit testing all features.
 - [ ] Integration testing with the various vendors so our API's don't break when theirs do.
 - [X] Travis, coveralls, greenkeeper, and other handy-dandy tools to automate chore tasks.

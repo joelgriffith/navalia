@@ -6,9 +6,6 @@ import * as chromeUtil from './util/chrome';
 
 const log = debug('navalia:chrome');
 
-// 10 second default timeout
-const defaultTimeout = 1000 * 10;
-
 type triggerEvents =
   | 'click'
   | 'mousedown'
@@ -23,21 +20,15 @@ type triggerEvents =
   | 'blur'
   | 'select';
 
-export interface httpRequest {
-  url: string;
-  method: string;
-  headers: object;
-  postData: string;
-}
-
-export interface options {
+export interface chromeConstructorOpts {
   flags?: chromeUtil.flags;
   cdp?: chromeUtil.cdp;
+  timeout?: number;
 }
 
-export interface navigateOpts {
-  onload?: boolean;
-  coverage?: boolean;
+export interface domOpts {
+  wait?: boolean;
+  timeout?: number;
 }
 
 export const events = {
@@ -49,11 +40,18 @@ export const pageloadOpts = {
   coverage: false,
 };
 
+const defaultDomOpts: domOpts = {
+  wait: false,
+};
+
+// waitForElement is called inside the context
+// of the browser, so no typings (just good 'ol JS)
 function waitForElement(selector, timeout) {
   return new Promise((resolve, reject) => {
     const timeOutId = setTimeout(() => {
       reject(`Selector "${selector}" failed to appear in ${timeout} ms`);
     }, timeout);
+
     const observer = new MutationObserver(function(_mutations, observation) {
       const found = document.querySelector(selector);
       if (found) {
@@ -76,13 +74,16 @@ export class Chrome extends EventEmitter {
   private flags?: chromeUtil.flags;
   private styleSheetsLoaded: any[];
   private kill: () => Promise<{}>;
+  private defaultTimeout: number;
 
-  constructor(opts: options = {}) {
+  constructor(opts: chromeConstructorOpts = {}) {
     super();
+
+    this.styleSheetsLoaded = [];
 
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
-    this.styleSheetsLoaded = [];
+    this.defaultTimeout = opts.timeout || 10000;
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -151,11 +152,15 @@ export class Chrome extends EventEmitter {
 
     const expression = function(selector, eventName, eventClass) {
       const node = document.querySelector(selector);
+      if (!node) {
+        return false;
+      }
       const doc = node && node.ownerDocument ? node.ownerDocument : node;
       const e = doc && doc.createEvent(eventClass);
       e.initEvent(eventName, true);
       e.synthetic = true;
       node.dispatchEvent(e, true);
+      return true;
     };
 
     return this.evaluate(expression, selector, eventName, eventClass);
@@ -190,8 +195,12 @@ export class Chrome extends EventEmitter {
 
   public async goto(
     url: string,
-    opts: navigateOpts = pageloadOpts,
-  ): Promise<void> {
+    opts: {
+      coverage: boolean;
+      onload: boolean;
+      timeout?: number;
+    } = pageloadOpts,
+  ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
     const waitForPageload = opts.onload === undefined ? true : opts.onload;
@@ -210,14 +219,45 @@ export class Chrome extends EventEmitter {
 
     log(`:goto() > going to ${url}`);
 
-    await cdp.Page.navigate({ url });
+    return new Promise(async (resolve, reject) => {
+      let hasResolved = false;
+      let requestId = null;
+      const timeoutId = setTimeout(
+        () => reject(`Goto failed to load in the timeout specified`),
+        opts.timeout || this.defaultTimeout,
+      );
 
-    if (waitForPageload) {
-      log(`:goto() > waiting for pageload on ${url}`);
-      await cdp.Page.loadEventFired();
-    }
+      cdp.Network.requestWillBeSent(params => {
+        if (requestId) return;
+        if (params.documentURL === url) {
+          requestId = params.requestId;
+        }
+      });
 
-    return;
+      cdp.Network.loadingFailed(params => {
+        if (hasResolved) return;
+        if (params.requestId === requestId) {
+          hasResolved = true;
+          clearTimeout(timeoutId);
+          reject(params.errorText);
+        }
+      });
+
+      cdp.Network.loadingFinished(async params => {
+        if (hasResolved) return;
+        if (params.requestId === requestId) {
+          hasResolved = true;
+          clearTimeout(timeoutId);
+          if (waitForPageload) {
+            log(`:goto() > waiting for pageload on ${url}`);
+            await cdp.Page.loadEventFired();
+          }
+          resolve(await this.evaluate(() => document.location.href));
+        }
+      });
+
+      cdp.Page.navigate({ url });
+    });
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
@@ -248,7 +288,7 @@ export class Chrome extends EventEmitter {
         );
       }
 
-      if (response.result && response.result.value) {
+      if (response.result) {
         return response.result.value;
       }
     }
@@ -275,10 +315,7 @@ export class Chrome extends EventEmitter {
     return buffer;
   }
 
-  public async pdf(filePath: string): Promise<any> {
-    if (!path.isAbsolute(filePath)) {
-      throw new Error(`Filepath is not absolute: ${filePath}`);
-    }
+  public async pdf(filePath: string): Promise<void | Buffer> {
     const cdp = await this.getChromeCDP();
 
     log(`:pdf() > saving PDF to ${filePath}`);
@@ -286,32 +323,59 @@ export class Chrome extends EventEmitter {
     const base64Image = await cdp.Page.printToPDF();
     const buffer = new Buffer(base64Image.data, 'base64');
 
-    return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    if (filePath) {
+      if (!path.isAbsolute(filePath)) {
+        throw new Error(`Filepath is not absolute: ${filePath}`);
+      }
+
+      return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+    }
+
+    return buffer;
   }
 
-  public async size(width: number, height: number): Promise<any> {
+  public async size(width: number, height: number): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     log(`:size() > setting window size to ${width}x${height}`);
 
     await cdp.Emulation.setVisibleSize({ width, height });
-    return cdp.Emulation.setDeviceMetricsOverride({
+    await cdp.Emulation.setDeviceMetricsOverride({
       width,
       height,
       deviceScaleFactor: 0,
       mobile: false,
       fitWindow: true,
     });
+
+    return true;
   }
 
-  public async exists(selector: string): Promise<boolean> {
+  public async exists(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:exists() > checking if '${selector}' exists`);
 
-    return !!await this.getSelectorId(selector);
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
+
+    return this.evaluate(selector => {
+      const ele = document.querySelector(selector);
+      return !!ele;
+    }, selector);
   }
 
-  public async html(selector: string = 'html'): Promise<string | null> {
+  public async html(
+    selector: string = 'html',
+    opts: domOpts = defaultDomOpts,
+  ): Promise<string | null> {
     const cdp = await this.getChromeCDP();
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     log(`:html() > getting '${selector}' HTML`);
 
@@ -326,8 +390,15 @@ export class Chrome extends EventEmitter {
     return outerHTML;
   }
 
-  public async text(selector: string = 'body'): Promise<string | null> {
+  public async text(
+    selector: string = 'body',
+    opts: domOpts = defaultDomOpts,
+  ): Promise<string | null> {
     log(`:text() > getting '${selector}' text`);
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     const text = await this.evaluate(selector => {
       const ele = document.querySelector(selector);
@@ -405,92 +476,164 @@ export class Chrome extends EventEmitter {
     });
   }
 
-  public async save(filePath: string): Promise<boolean> {
-    if (!path.isAbsolute(filePath)) {
-      throw new Error(`Filepath is not absolute: ${filePath}`);
-    }
+  public async save(filePath?: string): Promise<boolean | string | null> {
     log(`:save() > saving page HTML to ${filePath}`);
 
     const html = await this.html();
 
-    try {
-      fs.writeFileSync(filePath, html);
-      log(`:save() > page HTML saved successfully to ${filePath}`);
-      return true;
-    } catch (error) {
-      log(`:save() > page HTML failed ${error.message}`);
-      return false;
+    if (filePath) {
+      try {
+        fs.writeFileSync(filePath, html);
+        log(`:save() > page HTML saved successfully to ${filePath}`);
+        return true;
+      } catch (error) {
+        log(`:save() > page HTML failed ${error.message}`);
+        return false;
+      }
     }
+
+    return html;
   }
 
-  public async click(selector: string): Promise<void> {
+  public async click(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:click() > clicking '${selector}'`);
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     return this.trigger('click', selector);
   }
 
-  public async focus(selector: string): Promise<void> {
+  public async focus(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     const cdp = await this.getChromeCDP();
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     log(`:focus() > focusing '${selector}'`);
 
     const { root: { nodeId } } = await cdp.DOM.getDocument();
-    const { nodeId: foundNode } = await cdp.DOM.querySelector({
+    const node = await cdp.DOM.querySelector({
       selector,
       nodeId,
     });
 
-    return cdp.DOM.focus({ nodeId: foundNode });
+    if (!node) {
+      return false;
+    }
+
+    await cdp.DOM.focus({ nodeId: node.nodeId });
+
+    return true;
   }
 
-  public async type(selector: string, value: string): Promise<{}> {
+  public async type(
+    selector: string,
+    value: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:type() > typing'${value}' into '${selector}'`);
 
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
+
     // Focus on the selector
-    await this.focus(selector);
+    const focused = await this.focus(selector);
+
+    if (!focused) {
+      return false;
+    }
 
     const keys = value.split('') || [];
 
-    return Promise.all(
+    await Promise.all(
       keys.map(async key => this.simulateKeyPress('char', key)),
     );
+
+    return true;
   }
 
-  public async check(selector: string): Promise<void> {
+  public async check(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:check() > checking checkbox '${selector}'`);
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = true;
+        return true;
       }
+      return false;
     }, selector);
   }
 
-  public async uncheck(selector: string): Promise<void> {
+  public async uncheck(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:uncheck() > un-checking checkbox '${selector}'`);
 
-    return this.evaluate(selector => {
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
+
+    await this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.checked = false;
+        return true;
       }
+      return false;
     }, selector);
+
+    return true;
   }
 
-  public async select(selector: string, option: string): Promise<void> {
+  public async select(
+    selector: string,
+    option: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:select() > selecting option '${option}' in '${selector}'`);
 
-    return this.evaluate(selector => {
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
+
+    await this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.value = option;
       }
     }, selector);
+
+    return true;
   }
 
-  public async visible(selector: string): Promise<boolean> {
+  public async visible(
+    selector: string,
+    opts: domOpts = defaultDomOpts,
+  ): Promise<boolean> {
     log(`:visible() > seeing if '${selector}' is visible`);
+
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
 
     return this.evaluate(selector => {
       var element = document.querySelector(selector);
@@ -513,7 +656,10 @@ export class Chrome extends EventEmitter {
     }, selector);
   }
 
-  public async wait(waitParam: number | string): Promise<any> {
+  public async wait(
+    waitParam: number | string,
+    timeout?: number,
+  ): Promise<any> {
     if (typeof waitParam === 'number') {
       log(`:wait() > waiting ${waitParam} ms`);
 
@@ -522,9 +668,15 @@ export class Chrome extends EventEmitter {
       });
     }
 
-    log(`:wait() > waiting for selector "${waitParam}" to be inserted`);
+    timeout = timeout || this.defaultTimeout;
 
-    return this.evaluate(waitForElement, waitParam, defaultTimeout);
+    log(
+      `:wait() > waiting for selector "${waitParam}" to be inserted until ${timeout}ms`,
+    );
+
+    await this.evaluate(waitForElement, waitParam, timeout);
+
+    return true;
   }
 
   public async inject(src: string): Promise<boolean> {
@@ -554,12 +706,14 @@ export class Chrome extends EventEmitter {
     return false;
   }
 
-  public async pageload(): Promise<void> {
+  public async pageload(): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
     log(`:pageload() > waiting for pageload to be called`);
 
-    return cdp.Page.loadEventFired();
+    await cdp.Page.loadEventFired();
+
+    return true;
   }
 
   public async cookie(name?: string, value?: string): Promise<any> {
@@ -576,12 +730,12 @@ export class Chrome extends EventEmitter {
     if (value) {
       const url = await this.evaluate(() => window.location.href);
       const isSet = await cdp.Network.setCookie({ url, name, value });
-      return isSet ? value : null;
+      return isSet ? [{ name, value }] : null;
     }
 
     if (name) {
       const cookie = cookies.find(cookie => cookie.name === name);
-      return cookie ? cookie.value : null;
+      return cookie ? [{ name, value: cookie.value }] : null;
     }
 
     return cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));
@@ -590,7 +744,12 @@ export class Chrome extends EventEmitter {
   public async attr(
     selector: string,
     attribute: string,
-  ): Promise<string | void> {
+    opts: domOpts = defaultDomOpts,
+  ): Promise<string | null> {
+    if (opts.wait) {
+      await this.wait(selector, opts.timeout);
+    }
+
     return this.evaluate(
       (selector, attribute) => {
         const ele = document.querySelector(selector);

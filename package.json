@@ -4,10 +4,14 @@
   "description": "A browser automation manager with a consistent API",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "bin": {
+    "navalia": "bin/navalia.js"
+  },
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf build",
     "cover": "jest --coverage",
+    "dev": "nodemon --watch 'src/**/*.ts' --ignore 'src/**/*.spec.ts' --exec 'ts-node' src/graphql/server.ts",
     "docs": "cd docs && bundle exec jekyll serve",
     "precommit": "lint-staged",
     "prepublish": "npm run build",
@@ -44,8 +48,12 @@
     "chrome-launcher": "^0.3.0",
     "chrome-remote-interface": "^0.24.1",
     "debug": "^2.6.8",
+    "express": "^4.15.3",
+    "express-graphql": "^0.6.6",
+    "graphql": "^0.10.5",
     "lodash": "^4.17.4",
-    "ts-node": "^3.1.0"
+    "ts-node": "^3.1.0",
+    "yargs": "^8.0.2"
   },
   "repository": {
     "type": "git",
