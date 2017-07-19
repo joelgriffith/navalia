@@ -11,7 +11,7 @@ interface queueItem {
   reject: Function;
 }
 
-export interface clusterParams {
+export interface constructorOpts {
   numInstances?: number;
   maxJobs?: number;
   workerTTL?: number;
@@ -33,7 +33,7 @@ export class Navalia {
   private workerTTL: number;
   private chromeOptions: chromeOptions;
 
-  constructor(opts: clusterParams = {}) {
+  constructor(opts: constructorOpts = {}) {
     this.numInstances = opts.numInstances || 1;
     this.maxJobs = opts.maxJobs || -1;
     this.workerTTL = opts.workerTTL || -1;

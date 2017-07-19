@@ -41,8 +41,13 @@ export class ChromeLoader {
   serial() {
     return this.actions.reduce((promise, action, idx, array) => {
       return promise.then(async () => {
-        const res = await action.handler(this.chrome);
-        action.resolve(res);
+        let res;
+        try {
+          res = await action.handler(this.chrome);
+          action.resolve(res);
+        } catch (error) {
+          action.reject(error);
+        }
         if (idx === array.length - 1) this.chrome.done();
         return res;
       });

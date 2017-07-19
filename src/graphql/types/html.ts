@@ -1,9 +1,19 @@
-import { GraphQLString } from 'graphql';
+import { GraphQLString, GraphQLObjectType } from 'graphql';
+import { domArgs } from '../dom-types';
 
 export const html = {
-  type: GraphQLString,
+  type: new GraphQLObjectType({
+    name: 'html',
+    fields: () => ({
+      html: {
+        type: GraphQLString,
+        description: `The resulting HTML from the query`,
+      },
+    }),
+  }),
   description: `The html method returns the string of HTML for a particular selector. It accepts one argument: a css-style selector for the element you wish to extract html from.`,
   args: {
+    ...domArgs,
     selector: {
       description: `The css-style selector you wish to query for`,
       type: GraphQLString,
@@ -13,7 +23,11 @@ export const html = {
     const { loader } = context;
 
     return loader.run(chrome => {
-      return chrome.html(args.selector);
+      return chrome
+        .html(args.selector, { wait: args.wait, timeout: args.timeout })
+        .then(html => {
+          return { html };
+        });
     });
   },
 };

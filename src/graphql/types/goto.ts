@@ -1,7 +1,20 @@
-import { GraphQLBoolean, GraphQLString, GraphQLNonNull } from 'graphql';
+import {
+  GraphQLObjectType,
+  GraphQLBoolean,
+  GraphQLString,
+  GraphQLNonNull,
+} from 'graphql';
 
 export const goto = {
-  type: GraphQLBoolean,
+  type: new GraphQLObjectType({
+    name: 'goto',
+    fields: () => ({
+      url: {
+        type: GraphQLString,
+        description: `The final URL of the page (after any re-directs)`,
+      },
+    }),
+  }),
   description: `Navigates the browser to the webpage specified via the 'url' argument. Returns a boolean indicating success`,
   args: {
     url: {
@@ -23,10 +36,14 @@ export const goto = {
     const { loader } = context;
 
     return loader.run(async chrome => {
-      return chrome.goto(args.url, {
-        coverage: args.coverage,
-        pageload: args.pageload,
-      });
+      return chrome
+        .goto(args.url, {
+          coverage: args.coverage,
+          pageload: args.pageload,
+        })
+        .then(url => {
+          return { url };
+        });
     });
   },
 };

@@ -9,13 +9,13 @@ import { exists } from './types/exists';
 import { focus } from './types/focus';
 import { goto } from './types/goto';
 import { html } from './types/html';
-import { inject } from './types/inject';
 import { pageload } from './types/pageload';
 import { pdf } from './types/pdf';
 import { screenshot } from './types/screenshot';
 import { text } from './types/text';
 import { type } from './types/type';
 import { uncheck } from './types/uncheck';
+import { visible } from './types/visible';
 import { wait } from './types/wait';
 
 export const schema = new GraphQLSchema({
@@ -32,13 +32,13 @@ export const schema = new GraphQLSchema({
       focus,
       goto,
       html,
-      inject,
       pageload,
       pdf,
       screenshot,
       text,
       type,
       uncheck,
+      visible,
       wait,
     }),
   }),
