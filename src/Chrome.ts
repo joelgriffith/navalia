@@ -75,6 +75,7 @@ export class Chrome extends EventEmitter {
   private styleSheetsLoaded: any[];
   private kill: () => Promise<{}>;
   private defaultTimeout: number;
+  private navigatingPromise: Promise<any>;
 
   constructor(opts: chromeConstructorOpts = {}) {
     super();
@@ -84,6 +85,7 @@ export class Chrome extends EventEmitter {
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
     this.defaultTimeout = opts.timeout || 10000;
+    this.navigatingPromise = Promise.resolve();
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -206,6 +208,10 @@ export class Chrome extends EventEmitter {
     const waitForPageload = opts.onload === undefined ? true : opts.onload;
     const runCoverage = opts.coverage === undefined ? false : opts.coverage;
 
+    cdp.Page.frameStartedLoading(() => {
+      this.navigatingPromise = cdp.Page.loadEventFired();
+    });
+
     if (runCoverage) {
       log(`:goto() > gathering coverage for ${url}`);
       await cdp.Profiler.enable();
@@ -261,6 +267,8 @@ export class Chrome extends EventEmitter {
   }
 
   public async evaluate(expression: Function, ...args): Promise<any> {
+    await this.navigatingPromise;
+
     // Assume scripts are async, and if not wrap the result in a resolve calls
     const script = `
       (() => {
@@ -297,6 +305,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async screenshot(filePath?: string): Promise<void | Buffer> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:screenshot() > saving screenshot to ${filePath}`);
@@ -316,6 +325,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async pdf(filePath: string): Promise<void | Buffer> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:pdf() > saving PDF to ${filePath}`);
@@ -335,6 +345,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async size(width: number, height: number): Promise<boolean> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:size() > setting window size to ${width}x${height}`);
@@ -355,6 +366,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:exists() > checking if '${selector}' exists`);
 
     if (opts.wait) {
@@ -371,6 +383,7 @@ export class Chrome extends EventEmitter {
     selector: string = 'html',
     opts: domOpts = defaultDomOpts,
   ): Promise<string | null> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     if (opts.wait) {
@@ -394,6 +407,7 @@ export class Chrome extends EventEmitter {
     selector: string = 'body',
     opts: domOpts = defaultDomOpts,
   ): Promise<string | null> {
+    await this.navigatingPromise;
     log(`:text() > getting '${selector}' text`);
 
     if (opts.wait) {
@@ -412,6 +426,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async fetch(...args): Promise<any> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:fetch() > fetching resource with args: ${JSON.stringify(args)}`);
@@ -477,6 +492,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async save(filePath?: string): Promise<boolean | string | null> {
+    await this.navigatingPromise;
     log(`:save() > saving page HTML to ${filePath}`);
 
     const html = await this.html();
@@ -499,6 +515,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:click() > clicking '${selector}'`);
 
     if (opts.wait) {
@@ -512,6 +529,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     if (opts.wait) {
@@ -540,6 +558,8 @@ export class Chrome extends EventEmitter {
     value: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
+
     log(`:type() > typing'${value}' into '${selector}'`);
 
     if (opts.wait) {
@@ -566,6 +586,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:check() > checking checkbox '${selector}'`);
 
     if (opts.wait) {
@@ -586,6 +607,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:uncheck() > un-checking checkbox '${selector}'`);
 
     if (opts.wait) {
@@ -609,6 +631,7 @@ export class Chrome extends EventEmitter {
     option: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:select() > selecting option '${option}' in '${selector}'`);
 
     if (opts.wait) {
@@ -629,6 +652,7 @@ export class Chrome extends EventEmitter {
     selector: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
+    await this.navigatingPromise;
     log(`:visible() > seeing if '${selector}' is visible`);
 
     if (opts.wait) {
@@ -660,6 +684,8 @@ export class Chrome extends EventEmitter {
     waitParam: number | string,
     timeout?: number,
   ): Promise<any> {
+    await this.navigatingPromise;
+
     if (typeof waitParam === 'number') {
       log(`:wait() > waiting ${waitParam} ms`);
 
@@ -680,6 +706,8 @@ export class Chrome extends EventEmitter {
   }
 
   public async inject(src: string): Promise<boolean> {
+    await this.navigatingPromise;
+
     const fileContents = fs.readFileSync(src, { encoding: 'utf-8' });
     const extension = path.extname(src);
 
@@ -707,6 +735,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async pageload(): Promise<boolean> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:pageload() > waiting for pageload to be called`);
@@ -717,6 +746,7 @@ export class Chrome extends EventEmitter {
   }
 
   public async cookie(name?: string, value?: string): Promise<any> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(
@@ -746,6 +776,7 @@ export class Chrome extends EventEmitter {
     attribute: string,
     opts: domOpts = defaultDomOpts,
   ): Promise<string | null> {
+    await this.navigatingPromise;
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
@@ -769,6 +800,7 @@ export class Chrome extends EventEmitter {
     src: string,
     config = { throw: true },
   ): Promise<{ total: number; unused: number; percentUnused: number } | Error> {
+    await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
 
     log(`:coverage() > getting coverage stats for ${src}`);
