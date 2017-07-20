@@ -41,7 +41,7 @@ export const pageloadOpts = {
 };
 
 const defaultDomOpts: domOpts = {
-  wait: false,
+  wait: true,
 };
 
 // waitForElement is called inside the context
@@ -51,6 +51,10 @@ function waitForElement(selector, timeout) {
     const timeOutId = setTimeout(() => {
       reject(`Selector "${selector}" failed to appear in ${timeout} ms`);
     }, timeout);
+
+    if (document.querySelector(selector)) {
+      return resolve();
+    }
 
     const observer = new MutationObserver(function(_mutations, observation) {
       const found = document.querySelector(selector);
