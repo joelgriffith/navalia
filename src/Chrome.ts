@@ -229,7 +229,7 @@ export class Chrome extends EventEmitter {
 
       cdp.Network.requestWillBeSent(params => {
         if (requestId) return;
-        if (params.documentURL === url) {
+        if (params.documentURL.includes(url)) {
           requestId = params.requestId;
         }
       });
