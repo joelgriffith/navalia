@@ -1,3 +1,18 @@
+# 0.1.1
+
+## Features
+- By default, most DOM API's will attempt to wait for the selector's appearance. You can override this by specifying a final arg with `{ wait: false }`.
+- Slimmed down the logs and re-organized them so that they log _when_ things happen as opposed to _about_ to happen.
+- All API's will fail fast, IE: throwing when they don't find the selector you've specified.
+- Consistent return values.
+
+# 0.1.0
+
+## Features
+- GraphQL front-end!
+- Most DOM-related API's now have a last argument of options to specify things like `timeout` and `wait`.
+- Most API's will return a value indicating success or otherwise.
+
 # 0.0.22
 
 ## Features
