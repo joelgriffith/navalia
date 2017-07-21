@@ -1,7 +1,7 @@
 import * as debug from 'debug';
 
 import * as chromeUtil from './chrome';
-import { Chrome, events } from '../Chrome';
+import { Chrome } from '../Chrome';
 
 const log = debug('navalia:chrome-helper');
 
@@ -69,7 +69,7 @@ export class ChromeHelper {
       timeout: this.defaultTimeout,
     });
 
-    newTab.on(events.done, this.onTabClose.bind(this, targetId));
+    newTab.on('done', this.onTabClose.bind(this, targetId));
 
     return newTab;
   }

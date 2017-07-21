@@ -2,23 +2,11 @@ import { EventEmitter } from 'events';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as debug from 'debug';
+
 import * as chromeUtil from './util/chrome';
+import { getPageURL, waitForElement, click, html } from './util/dom';
 
 const log = debug('navalia:chrome');
-
-type triggerEvents =
-  | 'click'
-  | 'mousedown'
-  | 'mouseup'
-  | 'mouseover'
-  | 'touchstart'
-  | 'touchend'
-  | 'focus'
-  | 'touchcancel'
-  | 'touchmove'
-  | 'change'
-  | 'blur'
-  | 'select';
 
 export interface chromeConstructorOpts {
   flags?: chromeUtil.flags;
@@ -31,47 +19,9 @@ export interface domOpts {
   timeout?: number;
 }
 
-export const events = {
-  done: 'done',
-};
-
-export const pageloadOpts = {
-  onload: true,
-  coverage: false,
-};
-
 const defaultDomOpts: domOpts = {
   wait: true,
 };
-
-// waitForElement is called inside the context
-// of the browser, so no typings (just good 'ol JS)
-function waitForElement(selector, timeout) {
-  return new Promise((resolve, reject) => {
-    const timeOutId = setTimeout(() => {
-      reject(`Selector "${selector}" failed to appear in ${timeout} ms`);
-    }, timeout);
-
-    if (document.querySelector(selector)) {
-      return resolve();
-    }
-
-    const observer = new MutationObserver(function(_mutations, observation) {
-      const found = document.querySelector(selector);
-      if (found) {
-        observation.disconnect();
-        clearTimeout(timeOutId);
-        return resolve();
-      }
-    });
-
-    // start observing
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-    });
-  });
-}
 
 export class Chrome extends EventEmitter {
   private cdp?: chromeUtil.cdp;
@@ -80,6 +30,7 @@ export class Chrome extends EventEmitter {
   private kill: () => Promise<{}>;
   private defaultTimeout: number;
   private navigatingPromise: Promise<any>;
+  private frameId: string;
 
   constructor(opts: chromeConstructorOpts = {}) {
     super();
@@ -109,67 +60,6 @@ export class Chrome extends EventEmitter {
     this.cdp = cdp;
 
     return cdp;
-  }
-
-  private async getSelectorId(selector: string): Promise<number | null> {
-    const cdp = await this.getChromeCDP();
-
-    const document = await cdp.DOM.getDocument();
-
-    const { nodeId } = await cdp.DOM.querySelector({
-      nodeId: document.root.nodeId,
-      selector,
-    });
-
-    return nodeId;
-  }
-
-  private async trigger(
-    eventName: triggerEvents,
-    selector: string,
-  ): Promise<any> {
-    let eventClass = '';
-
-    switch (eventName) {
-      case 'click':
-      case 'mousedown':
-      case 'mouseup':
-      case 'mouseover':
-        eventClass = 'MouseEvents';
-        break;
-
-      case 'touchstart':
-      case 'touchend':
-      case 'touchcancel':
-      case 'touchmove':
-        eventClass = 'TouchEvents';
-        break;
-
-      case 'focus':
-      case 'change':
-      case 'blur':
-      case 'select':
-        eventClass = 'HTMLEvents';
-        break;
-
-      default:
-        throw `chrome#trigger: Couldn't handle event ${eventName} on selector ${selector}.`;
-    }
-
-    const expression = function(selector, eventName, eventClass) {
-      const node = document.querySelector(selector);
-      if (!node) {
-        return false;
-      }
-      const doc = node && node.ownerDocument ? node.ownerDocument : node;
-      const e = doc && doc.createEvent(eventClass);
-      e.initEvent(eventName, true);
-      e.synthetic = true;
-      node.dispatchEvent(e, true);
-      return true;
-    };
-
-    return this.evaluate(expression, selector, eventName, eventClass);
   }
 
   private async runScript(
@@ -205,15 +95,21 @@ export class Chrome extends EventEmitter {
       coverage: boolean;
       onload: boolean;
       timeout?: number;
-    } = pageloadOpts,
+    } = {
+      onload: true,
+      coverage: false,
+    },
   ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
     const waitForPageload = opts.onload === undefined ? true : opts.onload;
     const runCoverage = opts.coverage === undefined ? false : opts.coverage;
 
-    cdp.Page.frameStartedLoading(() => {
-      this.navigatingPromise = cdp.Page.loadEventFired();
+    cdp.Page.frameStartedLoading(({ frameId }) => {
+      if (frameId === this.frameId) {
+        log(':pageload() > page is loading');
+        this.navigatingPromise = cdp.Page.loadEventFired();
+      }
     });
 
     if (runCoverage) {
@@ -262,11 +158,12 @@ export class Chrome extends EventEmitter {
             log(`:goto() > waiting for pageload on ${url}`);
             await cdp.Page.loadEventFired();
           }
-          resolve(await this.evaluate(() => document.location.href));
+          resolve(await this.evaluate(getPageURL));
         }
       });
 
-      cdp.Page.navigate({ url });
+      const { frameId } = await cdp.Page.navigate({ url });
+      this.frameId = frameId;
     });
   }
 
@@ -287,22 +184,17 @@ export class Chrome extends EventEmitter {
       })();
     `;
 
-    log(`:evaluate() > executing script: ${script}`);
+    log(`:evaluate() > executing function '${expression.name}' in Chrome`);
 
     // Always eval scripts as if they were async
     const response = await this.runScript(script, true);
 
-    if (response) {
-      if (response.exceptionDetails) {
-        return new Error(
-          response.exceptionDetails.exception.description ||
-            response.exceptionDetails.text,
-        );
-      }
+    if (response && response.exceptionDetails) {
+      throw new Error(response.exceptionDetails.exception.value);
+    }
 
-      if (response.result) {
-        return response.result.value;
-      }
+    if (response && response.result) {
+      return response.result.value;
     }
 
     return null;
@@ -371,11 +263,12 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:exists() > checking if '${selector}' exists`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
+
+    log(`:exists() > checking if '${selector}' exists`);
 
     return this.evaluate(selector => {
       const ele = document.querySelector(selector);
@@ -388,7 +281,6 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<string | null> {
     await this.navigatingPromise;
-    const cdp = await this.getChromeCDP();
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
@@ -396,37 +288,28 @@ export class Chrome extends EventEmitter {
 
     log(`:html() > getting '${selector}' HTML`);
 
-    const nodeId = await this.getSelectorId(selector);
-
-    if (!nodeId) {
-      return null;
-    }
-
-    const { outerHTML } = await cdp.DOM.getOuterHTML({ nodeId });
-
-    return outerHTML;
+    return this.evaluate(html, selector);
   }
 
   public async text(
     selector: string = 'body',
     opts: domOpts = defaultDomOpts,
-  ): Promise<string | null> {
+  ): Promise<string> {
     await this.navigatingPromise;
-    log(`:text() > getting '${selector}' text`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
-    const text = await this.evaluate(selector => {
-      const ele = document.querySelector(selector);
-      if (ele) {
-        return ele.textContent;
-      }
-      return null;
-    }, selector);
+    log(`:text() > getting '${selector}' text`);
 
-    return text;
+    return this.evaluate(selector => {
+      const ele = document.querySelector(selector);
+      if (!ele) {
+        throw new Error(`:text() > selector ${selector} wasn't found.`);
+      }
+      return ele.textContent;
+    }, selector);
   }
 
   public async fetch(...args): Promise<any> {
@@ -497,9 +380,10 @@ export class Chrome extends EventEmitter {
 
   public async save(filePath?: string): Promise<boolean | string | null> {
     await this.navigatingPromise;
-    log(`:save() > saving page HTML to ${filePath}`);
 
     const html = await this.html();
+
+    log(`:save() > saving page HTML to ${filePath}`);
 
     if (filePath) {
       try {
@@ -520,13 +404,14 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:click() > clicking '${selector}'`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
-    return this.trigger('click', selector);
+    log(`:click() > clicking '${selector}'`);
+
+    return this.evaluate(click, selector);
   }
 
   public async focus(
@@ -534,6 +419,7 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
+
     const cdp = await this.getChromeCDP();
 
     if (opts.wait) {
@@ -549,7 +435,9 @@ export class Chrome extends EventEmitter {
     });
 
     if (!node) {
-      return false;
+      throw new Error(
+        `:focus() > Couldn't find element '${selector}' on the page.`,
+      );
     }
 
     await cdp.DOM.focus({ nodeId: node.nodeId });
@@ -564,18 +452,14 @@ export class Chrome extends EventEmitter {
   ): Promise<boolean> {
     await this.navigatingPromise;
 
-    log(`:type() > typing'${value}' into '${selector}'`);
-
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
     // Focus on the selector
-    const focused = await this.focus(selector);
+    await this.focus(selector, { wait: false });
 
-    if (!focused) {
-      return false;
-    }
+    log(`:type() > typing text '${value}' into '${selector}'`);
 
     const keys = value.split('') || [];
 
@@ -591,11 +475,12 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:check() > checking checkbox '${selector}'`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
+
+    log(`:check() > checking checkbox '${selector}'`);
 
     return this.evaluate(selector => {
       var element = document.querySelector(selector);
@@ -612,22 +497,21 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:uncheck() > un-checking checkbox '${selector}'`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
-    await this.evaluate(selector => {
-      var element = document.querySelector(selector);
-      if (element) {
-        element.checked = false;
-        return true;
-      }
-      return false;
-    }, selector);
+    log(`:uncheck() > un-checking checkbox '${selector}'`);
 
-    return true;
+    return this.evaluate(selector => {
+      var element = document.querySelector(selector);
+      if (!element) {
+        throw new Error(`:uncheck() > Couldn't find '${selector}' on page.`);
+      }
+      element.checked = false;
+      return true;
+    }, selector);
   }
 
   public async select(
@@ -636,20 +520,21 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:select() > selecting option '${option}' in '${selector}'`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
-    await this.evaluate(selector => {
+    log(`:select() > selecting option '${option}' in '${selector}'`);
+
+    return this.evaluate(selector => {
       var element = document.querySelector(selector);
       if (element) {
         element.value = option;
+        return true;
       }
+      return false;
     }, selector);
-
-    return true;
   }
 
   public async visible(
@@ -657,30 +542,37 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<boolean> {
     await this.navigatingPromise;
-    log(`:visible() > seeing if '${selector}' is visible`);
 
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
 
+    log(`:visible() > seeing if '${selector}' is visible`);
+
     return this.evaluate(selector => {
       var element = document.querySelector(selector);
-      if (element) {
-        let style;
-        try {
-          style = window.getComputedStyle(element);
-        } catch (e) {
-          return false;
-        }
-        if (style.visibility === 'hidden' || style.display === 'none') {
-          return false;
-        }
-        if (style.display === 'inline' || style.display === 'inline-block') {
-          return true;
-        }
-        return element.offsetWidth > 0 && element.offsetHeight > 0;
+
+      if (!element) {
+        throw new Error(`:visible() > Couldn't find '${selector}' on page.`);
       }
-      return false;
+
+      let style;
+      try {
+        style = window.getComputedStyle(element);
+      } catch (e) {
+        return false;
+      }
+      if (style.visibility === 'hidden' || style.display === 'none') {
+        return false;
+      }
+      if (
+        style.display === 'inline' ||
+        style.display === 'inline-block' ||
+        style.display === 'flex'
+      ) {
+        return true;
+      }
+      return element.offsetWidth > 0 && element.offsetHeight > 0;
     }, selector);
   }
 
@@ -701,7 +593,7 @@ export class Chrome extends EventEmitter {
     timeout = timeout || this.defaultTimeout;
 
     log(
-      `:wait() > waiting for selector "${waitParam}" to be inserted until ${timeout}ms`,
+      `:wait() > waiting for selector "${waitParam}" a maximum of ${timeout}ms`,
     );
 
     await this.evaluate(waitForElement, waitParam, timeout);
@@ -733,9 +625,7 @@ export class Chrome extends EventEmitter {
       return true;
     }
 
-    log(`:inject() > Unknown extension ${extension}`);
-
-    return false;
+    throw new Error(`:inject() > Unknown extension ${extension}`);
   }
 
   public async pageload(): Promise<boolean> {
@@ -781,9 +671,12 @@ export class Chrome extends EventEmitter {
     opts: domOpts = defaultDomOpts,
   ): Promise<string | null> {
     await this.navigatingPromise;
+
     if (opts.wait) {
       await this.wait(selector, opts.timeout);
     }
+
+    log(`:attr() > getting '${selector}' attribute '${attribute}'`);
 
     return this.evaluate(
       (selector, attribute) => {
@@ -802,7 +695,6 @@ export class Chrome extends EventEmitter {
 
   public async coverage(
     src: string,
-    config = { throw: true },
   ): Promise<{ total: number; unused: number; percentUnused: number } | Error> {
     await this.navigatingPromise;
     const cdp = await this.getChromeCDP();
@@ -828,12 +720,7 @@ export class Chrome extends EventEmitter {
     await cdp.CSS.stopRuleUsageTracking();
 
     if (!jsCoverage && !styleSheet) {
-      const error = new Error(`Couldn't locate script ${src} on the page.`);
-      log(`:coverage() > ${src} not found on the page.`);
-      if (config.throw) {
-        throw error;
-      }
-      return error;
+      throw new Error(`Couldn't locate script ${src} on the page.`);
     }
 
     if (styleSheet && styleSheet.styleSheetId) {
@@ -909,6 +796,6 @@ export class Chrome extends EventEmitter {
       this.kill();
     }
 
-    this.emit(events.done);
+    this.emit('done');
   }
 }

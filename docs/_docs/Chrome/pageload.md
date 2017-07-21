@@ -5,7 +5,7 @@ category: Chrome
 
 The `pageload` returns a promise that is resolved when the pageload event is fired. This can be effectively used to block further actions until a pageload has hit (for instance multi-page workflows).
 
-> The below example is pretty elaborate, but serves to demonstrate how to effectively use the pageload method
+> Note: nearly all methods will await pageload before executing, so it's not necessary to call this between page-transition events (IE: clicking an anchor).
 
 *JavaScript*
 ```js

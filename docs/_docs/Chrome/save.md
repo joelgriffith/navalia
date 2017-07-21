@@ -3,9 +3,9 @@ title: .save
 category: Chrome
 ---
 
-The `save` method captures the webpage HTML and saves it to the provided location. It accepts a single arugment: the absolute-path of where to save the file.
+The `save` method captures the webpage HTML and saves it to the provided location. It accepts a single arugment: the absolute-path of where to save the file. If no file-path is provided, the `save` method will return a string of the page.
 
-> This method can be used to snapshot pages for SEO purposes
+> This method can be used to snapshot pages for SEO purposes.
 
 *JavaScript*
 ```js
