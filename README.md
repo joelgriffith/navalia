@@ -10,9 +10,11 @@ $ npm i -g navalia
 $ navalia --port 5000
 ```
 
-![NavaliaQL](./assets/NavaliaQL.gif)
-
 Drive a headless browser with ease by using GraphQL. Navalia exposes both a GraphQL front-end and a set of modules for painless browser automation. There's no clunky API to learn or plugins to install.
+
+[View the library documentation here](https://joelgriffith.github.io/navalia/)
+
+[Install the npm module to run the GraphiQL client](https://www.npmjs.com/package/navalia)
 
 ## Features
 
@@ -22,18 +24,17 @@ Drive a headless browser with ease by using GraphQL. Navalia exposes both a Grap
 - Capture screenshots, pdfs, execute javascript, insert text, and more.
 - Use any runtime or framework you want!
 
-[View the library documentation here](https://joelgriffith.github.io/navalia/)
+## GraphQL Front-end
 
-[Install the npm module to run the GraphiQL client](https://www.npmjs.com/package/navalia)
-
-**BETA WARNING**
-This project heavily relies on bleeding-edge technology, as such the API and internals will likely change from time to time. I heavily recommend that you install `Chrome Canary` to capture the latest and greatest the browser has to offer.
+![NavaliaQL](./assets/NavaliaQL.gif)
 
 ## Recipes
 
 - [Functional Testing](https://codeburst.io/composable-end-to-end-tests-for-react-apps-2ec82170af62)
 
 - [Website Code Coverage](https://codeburst.io/capturing-unused-application-code-2b7594a9fe06)
+
+- [Visual Regression Testing](https://codeburst.io/automatic-visual-regression-testing-23cc06471dd)
 
 ## Roadmap
 
