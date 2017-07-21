@@ -3,7 +3,7 @@ title: .goto
 category: Chrome
 ---
 
-The async `goto` method navigates Chrome to a webpage. By default, it waits for the pageload event, but can be overriden. Below is an example of going to google.com.
+The async `goto` method navigates Chrome to a webpage. By default, it waits for the pageload event, but can be overriden. `goto` considers practically any response a success, except for network errors or timeouts. Redirects and other mechanisms for navigation are considered successful.
 
 *JavaScript*
 ```js

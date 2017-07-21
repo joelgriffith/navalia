@@ -5,7 +5,7 @@ category: Chrome
 
 The `wait` method accepts either a selector to wait for, or time in MS, before allowing Chrome to continue execution. If a string is passed in it's assumed to be a selector, whilst a number indicates a time to wait.
 
-> When using a selector, Navalia will fail after waiting for 10 seconds
+> When using a selector, a 2nd parameter of max-time to wait can be passed. Defaults to 10 seconds
 
 ### Using a selector
 

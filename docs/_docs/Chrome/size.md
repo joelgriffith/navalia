@@ -7,6 +7,8 @@ The `size` method resizes the frame of the browser, and is suitable for capturin
 
 The `size` method takes two arguments: a `width` (number) and a `height` (number).
 
+Returns `true` indicating success.
+
 *JavaScript*
 ```js
 const { Chrome } = require('navalia');

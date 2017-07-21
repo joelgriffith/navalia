@@ -5,6 +5,8 @@ category: Chrome
 
 The `focus` method focuses an element on the page. It accepts a css-style selector of the element you wish to focus.
 
+Accepts a 2nd parameter of options for granular control: `wait`, a boolean to inform Chrome to wait for it's apperance before executing (defaults to `true`), and a `timeout` number in milliseconds to throw when it doesn't appear.
+
 > It's not necessary to focus prior to entering text
 
 *JavaScript*

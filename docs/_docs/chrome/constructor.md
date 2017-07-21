@@ -12,6 +12,28 @@ It's important to call `done` at the end of your script so that the browser exis
 
 > You can view the chrome logs by setting the DEBUG environment variable to contain 'navalia:chrome' > `DEBUG=navalia:chrome node my-script.js`
 
+### timeout
+
+A time in milliseconds to use as a default for various asyncronous actions. This generally effects most DOM API's, where Chrome will wait for a selector before executing.
+
+*JavaScript*
+```js
+const { Chrome } = require('navalia');
+
+const chrome = new Chrome({
+  timeout: 60000,
+});
+```
+
+*TypeScript*
+```ts
+import { Chrome } from 'navalia';
+
+// Translates to `chrome --disable-sync --headless`
+const chrome:Chrome = new Chrome({
+  timeout: 60000,
+});
+
 ### flags
 
 An optional parameter of flags to pass the chrome execution. This should be a hash of `parameter: boolean`. By default, Chrome will boot with these flags: `--headless --disable-gpu --hide-scrollbars`. If you wish to disables these, you can do by setting them to `false` in the constructor.

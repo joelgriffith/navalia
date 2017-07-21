@@ -3,7 +3,7 @@ title: .pdf
 category: Chrome
 ---
 
-The `pdf` method takes a single argument: a file-path (absolute) of where to save the pdf.
+The `pdf` method takes a single argument: a file-path (absolute) of where to save the pdf. If no file-path is provided it will return a buffer of base64 encoded data.
 
 *JavaScript*
 ```js
