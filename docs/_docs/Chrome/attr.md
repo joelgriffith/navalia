@@ -34,5 +34,5 @@ async function getAll() {
   chrome.done();
 }
 
-click();
+getAll();
 ```
