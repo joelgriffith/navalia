@@ -1,3 +1,8 @@
+# 0.1.2
+
+## Fixes
+- Better error messaging in `evaluate`.
+
 # 0.1.1
 
 ## Features
