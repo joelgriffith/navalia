@@ -39,7 +39,13 @@ export class ChromeHelper {
     );
   }
 
-  public async start(): Promise<Chrome> {
+  // Due to the fact that Chrome contains
+  // a `.then` method, start therefore
+  // cannot offer a Promise interface. Otherwise
+  // that `.then` method will be called when
+  // the instance is returned in promise chain
+  // (which it returns `undefined`).
+  public start(callback): void {
     this.activeTabs++;
 
     if (!this.browserStartingPromise) {
@@ -47,31 +53,33 @@ export class ChromeHelper {
       this.browserStartingPromise = chromeUtil.launch(this.flags, true);
     }
 
-    const launched = await this.browserStartingPromise;
+    this.browserStartingPromise
+      .then(launched => {
+        this.kill = launched.browser.kill;
+        this.port = launched.browser.port;
+        this.cdp = launched.cdp;
 
-    this.kill = launched.browser.kill;
-    this.port = launched.browser.port;
-    this.cdp = launched.cdp;
+        log(`chrome on ${this.port} is running`);
 
-    log(`chrome on ${this.port} is running`);
+        return chromeUtil.createTab(this.cdp, this.port);
+      })
+      .then(({ tab, targetId }) => {
+        log(
+          `chrome on ${this
+            .port} launched a new tab at ${targetId}. current tabs: ${this
+            .activeTabs}`,
+        );
 
-    const { tab, targetId } = await chromeUtil.createTab(this.cdp, this.port);
+        const newTab = new Chrome({
+          cdp: tab,
+          flags: this.flags || chromeUtil.defaultFlags,
+          timeout: this.defaultTimeout,
+        });
 
-    log(
-      `chrome on ${this
-        .port} launched a new tab at ${targetId}. current tabs: ${this
-        .activeTabs}`,
-    );
+        newTab.on('done', this.onTabClose.bind(this, targetId));
 
-    const newTab = new Chrome({
-      cdp: tab,
-      flags: this.flags || chromeUtil.defaultFlags,
-      timeout: this.defaultTimeout,
-    });
-
-    newTab.on('done', this.onTabClose.bind(this, targetId));
-
-    return newTab;
+        callback(newTab);
+      });
   }
 
   public onTabClose(targetId: string): void {

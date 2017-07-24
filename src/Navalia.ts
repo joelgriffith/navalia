@@ -79,54 +79,58 @@ export class Navalia {
   }
 
   private async execute(
-    chrome: ChromeHelper | undefined,
+    chromeHelper: ChromeHelper | undefined,
     queueItem: queueItem | undefined,
   ): Promise<any> {
-    if (!chrome || (!queueItem || !queueItem.handler)) {
+    if (!chromeHelper || (!queueItem || !queueItem.handler)) {
       throw new Error(
         `#execute was called with no instance of Chrome or a Job`,
       );
     }
 
-    const tab = await chrome.start();
+    chromeHelper.start(async (chrome: Chrome) => {
+      log(`instance ${chromeHelper.port} is starting work`);
 
-    log(`instance ${chrome.port} is starting work`);
+      try {
+        const result = await queueItem.handler(chrome);
+        queueItem.resolve(result);
+      } catch (error) {
+        queueItem.reject(error);
+      }
 
-    try {
-      const result = await queueItem.handler(tab);
-      queueItem.resolve(result);
-    } catch (error) {
-      queueItem.reject(error);
-    }
+      chrome.done();
 
-    tab.done();
+      log(`instance ${chromeHelper.port} has completed work`);
 
-    log(`instance ${chrome.port} has completed work`);
+      if (chromeHelper.isFull()) {
+        log(
+          `instance ${chromeHelper.port} at max capacity, not taking work from queue`,
+        );
+        this.destroy(chromeHelper);
+        return;
+      }
 
-    if (chrome.isFull()) {
-      log(
-        `instance ${chrome.port} at max capacity, not taking work from queue`,
-      );
-      this.destroy(chrome);
-      return;
-    }
+      if (chromeHelper.getIsExpired()) {
+        log(
+          `instance ${chromeHelper.port} is expired and isn't taking new work`,
+        );
+        this.destroy(chromeHelper);
+        return;
+      }
 
-    if (chrome.getIsExpired()) {
-      log(`instance ${chrome.port} is expired and isn't taking new work`);
-      this.destroy(chrome);
-      return;
-    }
+      if (chromeHelper.getJobsComplete() === this.maxJobs) {
+        log(
+          `instance ${chromeHelper.port} has completed maximum jobs and is closing`,
+        );
+        this.destroy(chromeHelper);
+        return;
+      }
 
-    if (chrome.getJobsComplete() === this.maxJobs) {
-      log(`instance ${chrome.port} has completed maximum jobs and is closing`);
-      this.destroy(chrome);
-      return;
-    }
-
-    if (this.queueList.length) {
-      log(`instance ${chrome.port} is taking work from the queue`);
-      return this.execute(chrome, this.queueList.shift());
-    }
+      if (this.queueList.length) {
+        log(`instance ${chromeHelper.port} is taking work from the queue`);
+        return this.execute(chromeHelper, this.queueList.shift());
+      }
+    });
   }
 
   private async launchInstance(chromeOptions: chromeOptions): Promise<void> {
