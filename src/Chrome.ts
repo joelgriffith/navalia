@@ -525,6 +525,24 @@ export class Chrome extends EventEmitter {
     return this;
   }
 
+  public header(headerObj: { [headerName: string]: string }): Chrome {
+    this.actionQueue.push(async (): Promise<{
+      [headerName: string]: string;
+    }> => {
+      const cdp = await this.getChromeCDP();
+
+      log(`:header() > applying ${JSON.stringify(headerObj)} to all requests`);
+
+      await cdp.Network.setExtraHTTPHeaders({
+        headers: { headerObj },
+      });
+
+      return headerObj;
+    });
+
+    return this;
+  }
+
   public type(
     selector: string,
     value: string,
@@ -892,11 +910,19 @@ export class Chrome extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       try {
         const results = await this.resolveQueue(this.actionQueue, []);
-        this.actionQueue = [];
-        return resolve(handler(results.length === 1 ? results[0] : results));
+        resolve(handler(results.length === 1 ? results[0] : results));
       } catch (error) {
-        return reject(error);
+        reject(error);
       }
+      this.actionQueue = [];
+      return null;
+    });
+  }
+
+  public async end(): Promise<void> {
+    this.actionQueue.push(async (): Promise<boolean> => {
+      await this.done();
+      return true;
     });
   }
 

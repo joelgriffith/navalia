@@ -3,7 +3,9 @@ title: .done
 category: Chrome
 ---
 
-The `done` method cleans up chrome and exists the process. It accepts no arguments.
+The `done` method cleans up chrome and exits the process. It accepts no arguments.
+
+> This call runs immediately! Don't chain this with other actions if using the chain pattern (instead use `.end`)
 
 *JavaScript*
 ```js
