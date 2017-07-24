@@ -40,7 +40,7 @@ export class Chrome extends EventEmitter {
 
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
-    this.defaultTimeout = opts.timeout || 10000;
+    this.defaultTimeout = opts.timeout || 1000;
     this.frameId = '';
   }
 
@@ -350,7 +350,11 @@ export class Chrome extends EventEmitter {
   public exists(selector: string, opts: domOpts = defaultDomOpts): Chrome {
     this.actionQueue.push(async (): Promise<boolean> => {
       if (opts.wait) {
-        await this.waitNow(selector, opts.timeout);
+        try {
+          await this.waitNow(selector, opts.timeout);
+        } catch (error) {
+          return false;
+        }
       }
 
       log(`:exists() > checking if '${selector}' exists`);
