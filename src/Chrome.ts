@@ -190,7 +190,10 @@ export class Chrome extends EventEmitter {
     const response = await this.runScript(script, true);
 
     if (response && response.exceptionDetails) {
-      throw new Error(response.exceptionDetails.exception.value);
+      throw new Error(
+        response.exceptionDetails.exception.value ||
+          response.exceptionDetails.exception.description,
+      );
     }
 
     if (response && response.result) {
