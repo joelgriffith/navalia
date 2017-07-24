@@ -31,26 +31,25 @@ describe('ChromeHelper', () => {
   });
 
   describe('#start', () => {
-    it('should not start the browser again if it has already been started', () => {
+    it('should not start the browser again if it has already been started', done => {
       const mockedBrowser = getMockedBrowser();
       chromeUtil.defaultFlags = {};
       chromeUtil.launch = jest.fn(() => Promise.resolve(mockedBrowser));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
       const helper = new ChromeHelper({});
-      return helper
-        .start()
-        .then(() => {
-          return helper.start();
-        })
-        .then(() => {
+
+      helper.start(() => {
+        helper.start(() => {
           helper.onTabClose('tabTargetId');
           expect(chromeUtil.launch).toHaveBeenCalledWith(
             chromeUtil.defaultFlags,
             true,
           );
           expect(chromeUtil.launch).toHaveBeenCalledTimes(1);
+          done();
         });
+      });
     });
   });
 
@@ -61,37 +60,37 @@ describe('ChromeHelper', () => {
       expect(() => helper.onTabClose('target')).toThrowErrorMatchingSnapshot();
     });
 
-    it('should call `closeTarget` with the provided `targetId`', () => {
+    it('should call `closeTarget` with the provided `targetId`', done => {
       const mockedBrowser = getMockedBrowser();
       chromeUtil.launch = jest.fn(() => Promise.resolve(mockedBrowser));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
       const helper = new ChromeHelper({});
-      return helper.start().then(() => {
+      helper.start(() => {
         helper.onTabClose('tabTargetId');
         expect(mockedBrowser.cdp.Target.closeTarget).toHaveBeenCalledWith({
           targetId: 'tabTargetId',
         });
+        done();
       });
     });
   });
 
   describe('#quit', () => {
-    it('should close the cdp connection and kill the browser', () => {
+    it('should close the cdp connection and kill the browser', done => {
       const mockedBrowser = getMockedBrowser();
       chromeUtil.launch = jest.fn(() => Promise.resolve(mockedBrowser));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
       const helper = new ChromeHelper({});
-      return helper
-        .start()
-        .then(() => {
-          return helper.quit();
-        })
-        .then(() => {
+
+      helper.start(() => {
+        return helper.quit().then(() => {
           expect(mockedBrowser.cdp.close).toHaveBeenCalled();
           expect(mockedBrowser.browser.kill).toHaveBeenCalled();
+          done();
         });
+      });
     });
   });
 
@@ -105,40 +104,36 @@ describe('ChromeHelper', () => {
   });
 
   describe('#isIdle', () => {
-    it('should return true when the number of active tabs has been reduced to 0', () => {
+    it('should return true when the number of active tabs has been reduced to 0', done => {
       const helper = new ChromeHelper({});
       chromeUtil.launch = jest.fn(() => Promise.resolve(getMockedBrowser()));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
-      return helper
-        .start()
-        .then(() => {
-          expect(helper.isIdle()).toBe(false);
+      helper.start(() => {
+        expect(helper.isIdle()).toBe(false);
 
-          return helper.quit();
-        })
-        .then(() => {
+        return helper.quit().then(() => {
           expect(helper.isIdle()).toBe(true);
+          done();
         });
+      });
     });
   });
 
   describe('#isFull', () => {
-    it('should return true when the number of active tabs equals the `maxActiveTabs`', () => {
+    it('should return true when the number of active tabs equals the `maxActiveTabs`', done => {
       const helper = new ChromeHelper({ maxActiveTabs: 1 });
       chromeUtil.launch = jest.fn(() => Promise.resolve(getMockedBrowser()));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
-      return helper
-        .start()
-        .then(() => {
-          expect(helper.isFull()).toBe(true);
+      helper.start(() => {
+        expect(helper.isFull()).toBe(true);
 
-          return helper.quit();
-        })
-        .then(() => {
+        return helper.quit().then(() => {
           expect(helper.isFull()).toBe(false);
+          done();
         });
+      });
     });
   });
 
@@ -157,14 +152,15 @@ describe('ChromeHelper', () => {
       expect(helper.getJobsComplete()).toEqual(0);
     });
 
-    it('should return 1 if one job has been completed', () => {
+    it('should return 1 if one job has been completed', done => {
       const helper = new ChromeHelper({ maxActiveTabs: 1 });
       chromeUtil.launch = jest.fn(() => Promise.resolve(getMockedBrowser()));
       chromeUtil.createTab = jest.fn(getMockedTab('targetId'));
 
-      return helper.start().then(() => {
+      helper.start(() => {
         helper.onTabClose('tabTargetId');
         expect(helper.getJobsComplete()).toEqual(1);
+        done();
       });
     });
   });
