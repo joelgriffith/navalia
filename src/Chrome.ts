@@ -182,7 +182,7 @@ export class Chrome extends EventEmitter {
   ): Promise<any[]> {
     const promiseReduction = items.reduce((prevPromise, nextPromise, idx) => {
       return prevPromise
-        .then(async (...res) => {
+        .then(async res => {
           if (idx !== 0) {
             results.push(res);
           }
@@ -922,11 +922,13 @@ export class Chrome extends EventEmitter {
     });
   }
 
-  public async end(): Promise<void> {
+  public end(): Chrome {
     this.actionQueue.push(async (): Promise<boolean> => {
       await this.done();
       return true;
     });
+
+    return this;
   }
 
   public done(): void {

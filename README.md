@@ -36,6 +36,45 @@ Drive a headless browser with ease by using GraphQL. Navalia exposes both a Grap
 
 - [Visual Regression Testing](https://codeburst.io/automatic-visual-regression-testing-23cc06471dd)
 
+## Usage
+
+The API for interacting with a browser is simple and chainable. You can call all methods individually and `await`/`then` the resulting value, or chain multiple together and collect their responses in a single result.
+
+*Chaining*
+
+```js
+const { Chrome } = require('navalia');
+const chrome = new Chrome();
+
+chrome
+  .goto('https://amazon.com')
+  .type('input', 'Kindle')
+  .click('.buy-now')
+  .end()
+  .then((responses) => {
+    console.log(responses); // ['https://www.amazon.com/', true, true, true]
+  });
+```
+
+*Await*
+
+```js
+import { Chrome } from 'navalia';
+const chrome = new Chrome();
+
+async function buyItOnAmazon() {
+  const url = await chrome.goto('https://amazon.com');
+  const typed = await chrome.type('input', 'Kindle');
+  const clicked = await chrome.click('.buy-now');
+
+  chrome.done();
+
+  console.log(url, typed, clicked); // 'https://www.amazon.com/', true, true
+}
+
+buyItOnAmazon();
+```
+
 ## Roadmap
 
 In no particular order, this is the vision of navalia going forward:
