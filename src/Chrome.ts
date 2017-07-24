@@ -913,11 +913,11 @@ export class Chrome extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       try {
         const results = await this.resolveQueue(this.actionQueue, []);
+        this.actionQueue = [];
         resolve(handler(results.length === 1 ? results[0] : results));
       } catch (error) {
         reject(error);
       }
-      this.actionQueue = [];
       return null;
     });
   }
