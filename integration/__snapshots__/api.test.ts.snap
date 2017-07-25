@@ -1,8 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Chrome #click" should throw an error for elements that are not there 1`] = `
+[Error: Error: :click() > Unable to find element by selector: .nope
+    at click (<anonymous>:6:15)
+    at <anonymous>:12:4
+    at <anonymous>:18:9]
+`;
+
 exports[`Chrome #evaluate should throw when errors happen in Chrome 1`] = `
 [Error: Error: I should propogate
     at result (<anonymous>:4:23)
     at <anonymous>:5:16
     at <anonymous>:11:9]
+`;
+
+exports[`Chrome #text should throw an error if the element isn't found 1`] = `
+[Error: Error: :text() > selector div wasn't found.
+    at getText (<anonymous>:6:27)
+    at <anonymous>:9:16
+    at <anonymous>:15:9]
 `;

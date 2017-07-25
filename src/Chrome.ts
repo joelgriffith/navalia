@@ -901,7 +901,7 @@ export class Chrome extends EventEmitter {
         return actions[idx]
           .handler()
           .then(res => {
-            const nextIndex = ++idx;
+            const nextIndex = idx + 1;
             results.push(res);
             if (!actions[nextIndex]) {
               this.actionQueue = []; // Drain the queue before resolving

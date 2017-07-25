@@ -112,4 +112,104 @@ describe('Chrome', () => {
       expect(html).toEqual('<html><head></head><body></body></html>');
     });
   });
+
+  describe('#text', () => {
+    it('should return the text an element', async () => {
+      const chrome = new Chrome();
+      const text = `All my life I've been searching for something`;
+      await chrome.evaluate(text => {
+        var div = document.createElement('div');
+        div.innerHTML = `<div>${text}</div>`;
+
+        while (div.children.length > 0) {
+          document.body.appendChild(div.children[0]);
+        }
+      }, text);
+      const textRes = await chrome.text('div');
+      chrome.done();
+      expect(textRes).toEqual(text);
+    });
+
+    it('should wait for the element before trying', async () => {
+      const chrome = new Chrome();
+      const text = `All my life I've been searching for something`;
+      await chrome.evaluate(text => {
+        setTimeout(() => {
+          var div = document.createElement('div');
+          div.innerHTML = `<div>${text}</div>`;
+
+          while (div.children.length > 0) {
+            document.body.appendChild(div.children[0]);
+          }
+        }, 5);
+      }, text);
+      const textRes = await chrome.text('div');
+      chrome.done();
+      expect(textRes).toEqual(text);
+    });
+
+    it("should throw an error if the element isn't found", async () => {
+      const chrome = new Chrome();
+      return chrome
+        .text('div', { wait: false })
+        .then(textRes => {
+          expect(textRes).toEqual(null);
+        })
+        .catch(error => {
+          expect(error).toMatchSnapshot();
+          chrome.done();
+        });
+    });
+  });
+
+  describe('#click"', () => {
+    it('should click elements', async () => {
+      const chrome = new Chrome();
+      await chrome.evaluate(() => {
+        var div = document.createElement('div');
+        div.innerHTML = `
+          <button class="clickable" onclick="javascript:document.body.appendChild(document.createElement('span'))">Click Me!</button>
+        `;
+
+        while (div.children.length > 0) {
+          document.body.appendChild(div.children[0]);
+        }
+      });
+      await chrome.click('.clickable');
+      const exists = await chrome.exists('span');
+      chrome.done();
+      expect(exists).toEqual(true);
+    });
+
+    it('should wait for elements by default', async () => {
+      const chrome = new Chrome();
+      return chrome
+        .evaluate(() => {
+          setTimeout(() => {
+            var div = document.createElement('div');
+            div.innerHTML = `<button class="clickable">Click Me!</button>`;
+
+            while (div.children.length > 0) {
+              document.body.appendChild(div.children[0]);
+            }
+          }, 5);
+        })
+        .click('.clickable')
+        .then(([evResult, click]) => {
+          expect(click).toEqual(true);
+          chrome.done();
+        });
+    });
+
+    it('should throw an error for elements that are not there', async () => {
+      const chrome = new Chrome();
+      return chrome
+        .click('.nope', { wait: false })
+        .then(res => expect(res).toBe(null))
+        .catch(error => {
+          expect(error).toMatchSnapshot();
+          chrome.done();
+        });
+    });
+  });
 });
