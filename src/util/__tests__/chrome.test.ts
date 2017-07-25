@@ -1,3 +1,5 @@
+process.env.DEBUG = '';
+
 jest.mock('chrome-launcher');
 jest.mock('chrome-remote-interface', () => () =>
   Promise.resolve({
