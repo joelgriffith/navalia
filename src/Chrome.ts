@@ -128,6 +128,9 @@ export class Chrome extends EventEmitter {
     waitParam: number | string,
     timeout?: number,
   ): Promise<any> {
+    // If supplying a number, we assume that
+    // you want to wait that number in MS before
+    // executing futher
     if (typeof waitParam === 'number') {
       log(`:wait() > waiting ${waitParam} ms`);
 
@@ -909,7 +912,6 @@ export class Chrome extends EventEmitter {
             return executePromiseAtIndex(nextIndex);
           })
           .catch(error => {
-            console.log(error);
             if (!actions[idx].retries) {
               return reject(error);
             }
