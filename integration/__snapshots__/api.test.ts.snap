@@ -1,5 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Chrome #check should throw if the element is not found 1`] = `
+[Error: [2mexpect([22m[31mreceived[39m[2m).toEqual([22m[32mexpected[39m[2m)[22m
+
+Expected value to equal:
+  [32mnull[39m
+Received:
+  [31m[false, false][39m
+
+Difference:
+
+  Comparing two different types of values. Expected [32mnull[39m but received [31marray[39m.]
+`;
+
 exports[`Chrome #click" should throw an error for elements that are not there 1`] = `
 [Error: Error: :click() > Unable to find element by selector: .nope
     at click (<anonymous>:6:15)
@@ -14,9 +27,20 @@ exports[`Chrome #evaluate should throw when errors happen in Chrome 1`] = `
     at <anonymous>:11:9]
 `;
 
+exports[`Chrome #focus should throw an error if the element isn't there 1`] = `[Error: Could not find node with given id]`;
+
 exports[`Chrome #text should throw an error if the element isn't found 1`] = `
 [Error: Error: :text() > selector div wasn't found.
     at getText (<anonymous>:6:27)
     at <anonymous>:9:16
     at <anonymous>:15:9]
+`;
+
+exports[`Chrome #type should should throw if the element never shows up 1`] = `[Error: Could not find node with given id]`;
+
+exports[`Chrome #uncheck should throw if the element is not found 1`] = `
+[Error: Error: :uncheck() > Couldn't find 'input' on page.
+    at selector (<anonymous>:6:27)
+    at <anonymous>:10:16
+    at <anonymous>:16:9]
 `;

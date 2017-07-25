@@ -1,16 +1,23 @@
 import { Chrome } from '../src';
 
 describe('Chrome', () => {
+  let chrome = null;
+
+  beforeEach(() => {
+    chrome = new Chrome();
+  });
+
+  afterEach(() => {
+    chrome.done();
+  });
+
   describe('#evaluate', () => {
     it('should run an expression and return the value', async () => {
-      const chrome = new Chrome();
       const res = await chrome.evaluate(() => window.location.href);
-      chrome.done();
       expect(res).toEqual('about:blank');
     });
 
     it('should handle async functions', async () => {
-      const chrome = new Chrome();
       const res = await chrome.evaluate(() => {
         return new Promise(resolve => {
           setTimeout(() => {
@@ -18,13 +25,10 @@ describe('Chrome', () => {
           }, 10);
         });
       });
-      chrome.done();
       expect(res).toEqual('about:blank');
     });
 
     it('should throw when errors happen in Chrome', async () => {
-      const chrome = new Chrome();
-
       return chrome
         .evaluate(() => {
           throw new Error('I should propogate');
@@ -34,13 +38,11 @@ describe('Chrome', () => {
           expect(res).toBeNull();
         })
         .catch(error => {
-          chrome.done();
           expect(error).toMatchSnapshot();
         });
     });
 
     it('should allow variables to be passed in', async () => {
-      const chrome = new Chrome();
       const res = await chrome.evaluate(
         (a, b, c) => {
           return [a, b, c];
@@ -49,28 +51,22 @@ describe('Chrome', () => {
         'bar',
         'baz',
       );
-      chrome.done();
       expect(res).toEqual(['foo', 'bar', 'baz']);
     });
   });
 
   describe('#exists', () => {
     it('should return true if something exists', async () => {
-      const chrome = new Chrome();
       const exists = await chrome.exists('body');
-      chrome.done();
       expect(exists).toEqual(true);
     });
 
     it('should return false if it does not', async () => {
-      const chrome = new Chrome();
       const exists = await chrome.exists('.i-am-not-there', { wait: false });
-      chrome.done();
       expect(exists).toEqual(false);
     });
 
     it('should wait for items to appear', async () => {
-      const chrome = new Chrome();
       await chrome.evaluate(() => {
         setTimeout(() => {
           var div = document.createElement('div');
@@ -82,12 +78,10 @@ describe('Chrome', () => {
         }, 10);
       });
       const exists = await chrome.exists('.arriving-late');
-      chrome.done();
       expect(exists).toEqual(true);
     });
 
     it('should wait for items to appear and return false', async () => {
-      const chrome = new Chrome();
       await chrome.evaluate(() => {
         setTimeout(() => {
           var div = document.createElement('div');
@@ -99,23 +93,19 @@ describe('Chrome', () => {
         }, 10);
       });
       const exists = await chrome.exists('.arriving-late', { timeout: 5 });
-      chrome.done();
       expect(exists).toEqual(false);
     });
   });
 
   describe('#html', () => {
     it('should return the html of the page with no args', async () => {
-      const chrome = new Chrome();
       const html = await chrome.html();
-      chrome.done();
       expect(html).toEqual('<html><head></head><body></body></html>');
     });
   });
 
   describe('#text', () => {
     it('should return the text an element', async () => {
-      const chrome = new Chrome();
       const text = `All my life I've been searching for something`;
       await chrome.evaluate(text => {
         var div = document.createElement('div');
@@ -126,12 +116,10 @@ describe('Chrome', () => {
         }
       }, text);
       const textRes = await chrome.text('div');
-      chrome.done();
       expect(textRes).toEqual(text);
     });
 
     it('should wait for the element before trying', async () => {
-      const chrome = new Chrome();
       const text = `All my life I've been searching for something`;
       await chrome.evaluate(text => {
         setTimeout(() => {
@@ -144,12 +132,10 @@ describe('Chrome', () => {
         }, 5);
       }, text);
       const textRes = await chrome.text('div');
-      chrome.done();
       expect(textRes).toEqual(text);
     });
 
     it("should throw an error if the element isn't found", async () => {
-      const chrome = new Chrome();
       return chrome
         .text('div', { wait: false })
         .then(textRes => {
@@ -157,14 +143,12 @@ describe('Chrome', () => {
         })
         .catch(error => {
           expect(error).toMatchSnapshot();
-          chrome.done();
         });
     });
   });
 
   describe('#click"', () => {
     it('should click elements', async () => {
-      const chrome = new Chrome();
       await chrome.evaluate(() => {
         var div = document.createElement('div');
         div.innerHTML = `
@@ -177,12 +161,10 @@ describe('Chrome', () => {
       });
       await chrome.click('.clickable');
       const exists = await chrome.exists('span');
-      chrome.done();
       expect(exists).toEqual(true);
     });
 
     it('should wait for elements by default', async () => {
-      const chrome = new Chrome();
       return chrome
         .evaluate(() => {
           setTimeout(() => {
@@ -197,18 +179,230 @@ describe('Chrome', () => {
         .click('.clickable')
         .then(([evResult, click]) => {
           expect(click).toEqual(true);
-          chrome.done();
         });
     });
 
     it('should throw an error for elements that are not there', async () => {
-      const chrome = new Chrome();
       return chrome
         .click('.nope', { wait: false })
         .then(res => expect(res).toBe(null))
         .catch(error => {
           expect(error).toMatchSnapshot();
-          chrome.done();
+        });
+    });
+  });
+
+  describe('#focus', () => {
+    it('should focus an input', () => {
+      return chrome
+        .evaluate(() => {
+          var div = document.createElement('div');
+          div.innerHTML = `<input type="text" />`;
+
+          while (div.children.length > 0) {
+            document.body.appendChild(div.children[0]);
+          }
+        })
+        .focus('input')
+        .evaluate(() => {
+          return document.activeElement === document.querySelector('input');
+        })
+        .then(results => {
+          expect(results[2]).toEqual(true);
+        });
+    });
+
+    it('should wait for the element then focus', () => {
+      return chrome
+        .evaluate(() => {
+          setTimeout(() => {
+            var div = document.createElement('div');
+            div.innerHTML = `<input type="text" />`;
+
+            while (div.children.length > 0) {
+              document.body.appendChild(div.children[0]);
+            }
+          }, 5);
+        })
+        .focus('input')
+        .evaluate(() => {
+          return document.activeElement === document.querySelector('input');
+        })
+        .then(results => {
+          expect(results[2]).toEqual(true);
+        });
+    });
+
+    it("should throw an error if the element isn't there", () => {
+      return chrome
+        .focus('input', { wait: false })
+        .then(results => {
+          expect(results).toEqual(null);
+        })
+        .catch(error => {
+          expect(error).toMatchSnapshot();
+        });
+    });
+  });
+
+  describe('#type', () => {
+    it('should type text into an element', () => {
+      const text = 'Hello Goodbye';
+      return chrome
+        .evaluate(() => {
+          var div = document.createElement('div');
+          div.innerHTML = `<input type="text" />`;
+
+          while (div.children.length > 0) {
+            document.body.appendChild(div.children[0]);
+          }
+        })
+        .type('input', text)
+        .evaluate(() => {
+          return document.querySelector('input').value;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(text);
+        });
+    });
+
+    it('should wait to type text into an element', () => {
+      const text = 'Hello Goodbye';
+      return chrome
+        .evaluate(() => {
+          setTimeout(() => {
+            var div = document.createElement('div');
+            div.innerHTML = `<input type="text" />`;
+
+            while (div.children.length > 0) {
+              document.body.appendChild(div.children[0]);
+            }
+          }, 5);
+        })
+        .type('input', text)
+        .evaluate(() => {
+          return document.querySelector('input').value;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(text);
+        });
+    });
+
+    it('should should throw if the element never shows up', () => {
+      const text = 'Hello Goodbye';
+      return chrome
+        .type('input', text, { wait: false })
+        .then(results => {
+          expect(results).toEqual(null);
+        })
+        .catch(error => {
+          expect(error).toMatchSnapshot();
+        });
+    });
+  });
+
+  describe('#check', () => {
+    it('should check a checkbox', () => {
+      return chrome
+        .evaluate(() => {
+          var div = document.createElement('div');
+          div.innerHTML = `<input type="checkbox" />`;
+
+          while (div.children.length > 0) {
+            document.body.appendChild(div.children[0]);
+          }
+        })
+        .check('input')
+        .evaluate(() => {
+          return document.querySelector('input').checked;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(true);
+        });
+    });
+
+    it('should wait to check a checkbox', () => {
+      return chrome
+        .evaluate(() => {
+          setTimeout(() => {
+            var div = document.createElement('div');
+            div.innerHTML = `<input type="checkbox" />`;
+
+            while (div.children.length > 0) {
+              document.body.appendChild(div.children[0]);
+            }
+          }, 5);
+        })
+        .check('input')
+        .evaluate(() => {
+          return document.querySelector('input').checked;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(true);
+        });
+    });
+
+    it('should throw if the element is not found', () => {
+      return chrome
+        .check('input', { wait: false })
+        .then(results => {
+          expect(results).toEqual(null);
+        })
+        .catch(error => {
+          expect(error).toMatchSnapshot();
+        });
+    });
+  });
+
+  describe('#uncheck', () => {
+    it('should uncheck a checkbox', () => {
+      return chrome
+        .evaluate(() => {
+          var div = document.createElement('div');
+          div.innerHTML = `<input type="checkbox" checked/>`;
+
+          while (div.children.length > 0) {
+            document.body.appendChild(div.children[0]);
+          }
+        })
+        .uncheck('input')
+        .evaluate(() => {
+          return document.querySelector('input').checked;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(false);
+        });
+    });
+
+    it('should wait to check a checkbox', () => {
+      return chrome
+        .evaluate(() => {
+          setTimeout(() => {
+            var div = document.createElement('div');
+            div.innerHTML = `<input type="checkbox" checked/>`;
+
+            while (div.children.length > 0) {
+              document.body.appendChild(div.children[0]);
+            }
+          }, 5);
+        })
+        .uncheck('input')
+        .evaluate(() => {
+          return document.querySelector('input').checked;
+        })
+        .then(results => {
+          expect(results[2]).toEqual(false);
+        });
+    });
+
+    it('should throw if the element is not found', () => {
+      return chrome
+        .uncheck('input', { wait: false })
+        .then(results => {
+          expect(results).toEqual(null);
+        })
+        .catch(error => {
+          expect(error).toMatchSnapshot();
         });
     });
   });
