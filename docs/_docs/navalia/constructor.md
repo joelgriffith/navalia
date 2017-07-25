@@ -83,9 +83,13 @@ const navalia:Navalia = new Navalia({
 
 ### chromeOptions
 
-The options to pass into each `Chrome` instance when started. This options object currently has two properties: `flags` and `maxActiveTabs`. A [large list of flag options is published here](https://peter.sh/experiments/chromium-command-line-switches/).
+The options to pass into each `Chrome` instance when started. The available options are:
 
-The `maxActiveTabs` option restricts how many active tabs an instance of Chrome can utilize internally. Once that limit is reached, either another browser instance will begin working _or_ the work will be queued based upon `numInstances`.
+- `flags`: An object of key-value pairs where the keys are camel-case Chrome flags and values are a boolean representing whether or not to pass the flags. A [large list of flag options is published here](https://peter.sh/experiments/chromium-command-line-switches/). Defaults to: `--headless --disable-gpu --hide-scrollbars`.
+
+- `timeout`: A Global default timeout for individual actions. This is a timer in `ms`, and will fail the action if the timeout is breached. You can also specify a per-action timeout as well. Defaults to `1000`.
+
+- `maxActiveTabs`: The maximum number of concurrent tabs that can be open at any given time. Defaults to `-1` (Infinity).
 
 *JavaScript*
 ```js
@@ -94,6 +98,7 @@ const { Navalia } = require('navalia');
 const navalia = new Navalia({
   chromeOptions: {
     maxActiveTabs: 10,
+    timeout: 5000,
     flags: {
       disableSync: true,
     },
@@ -108,6 +113,7 @@ import { Navalia, chromeOptions } from 'navalia';
 const navalia:Navalia = new Navalia({
   chromeOptions: {
     maxActiveTabs: 10,
+    timeout: 5000,
     flags: {
       disableSync: true,
     },

@@ -14,12 +14,13 @@
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'src/**/*.spec.ts' --exec 'ts-node' src/graphql/server.ts",
     "docs": "cd docs && bundle exec jekyll serve",
     "precommit": "lint-staged",
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm test && npm run build",
     "prettier": "prettier --single-quote --trailing-comma es5 --write \"src/**/*.ts\"",
     "release": "np",
     "start": "ts-node",
-    "test": "jest",
-    "watch": "jest --watch"
+    "test": "jest --testMatch=**/*.test.ts",
+    "test:unit": "jest --testMatch=\"**/__tests__/*.test.(ts|tsx|js)\"",
+    "test:watch": "npm test -- --watch"
   },
   "keywords": [
     "chrome",
@@ -32,7 +33,7 @@
   "license": "LGPL-3.0",
   "devDependencies": {
     "@types/debug": "0.0.29",
-    "@types/jest": "^20.0.2",
+    "@types/jest": "^20.0.5",
     "@types/lodash": "^4.14.67",
     "@types/node": "^6.0.4",
     "husky": "^0.14.3",
@@ -42,6 +43,7 @@
     "np": "^2.16.0",
     "prettier": "^1.5.2",
     "rimraf": "^2.6.1",
+    "ts-jest": "^20.0.7",
     "typescript": "^2.4.1"
   },
   "dependencies": {
@@ -67,11 +69,8 @@
       "js"
     ],
     "transform": {
-      "^.+\\.(ts)$": "<rootDir>/preprocessor.js"
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testMatch": [
-      "**/__tests__/*.(ts|tsx|js)"
-    ],
     "transformIgnorePatterns": [
       "<rootDir>/node_modules/(?!chrome-launcher)"
     ]

@@ -1,4 +1,4 @@
-import { Chrome } from '../../src';
+import { Chrome } from '../src';
 
 describe('Chrome', () => {
   describe('#evaluate', () => {

@@ -30,7 +30,7 @@ export class ChromeHelper {
     this.activeTabs = 0;
     this.maxActiveTabs = options.maxActiveTabs || -1;
     this.flags = options.flags || chromeUtil.defaultFlags;
-    this.timeout = options.timeout || 10000;
+    this.timeout = options.timeout || 1000;
 
     log(
       `using up to ${this.maxActiveTabs === -1
