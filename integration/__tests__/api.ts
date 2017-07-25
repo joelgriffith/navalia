@@ -22,7 +22,7 @@ describe('Chrome', () => {
       expect(res).toEqual('about:blank');
     });
 
-    it('should throw when errors happen in Chrome', async () => {
+    it.skip('should throw when errors happen in Chrome', async () => {
       const chrome = new Chrome();
 
       return chrome
