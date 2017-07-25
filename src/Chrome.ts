@@ -128,6 +128,9 @@ export class Chrome extends EventEmitter {
     waitParam: number | string,
     timeout?: number,
   ): Promise<any> {
+    // If supplying a number, we assume that
+    // you want to wait that number in MS before
+    // executing futher
     if (typeof waitParam === 'number') {
       log(`:wait() > waiting ${waitParam} ms`);
 
@@ -174,30 +177,6 @@ export class Chrome extends EventEmitter {
     await cdp.DOM.focus({ nodeId: node.nodeId });
 
     return true;
-  }
-
-  private async resolveQueue(
-    items: Function[],
-    results: any[],
-  ): Promise<any[]> {
-    const promiseReduction = items.reduce((prevPromise, nextPromise, idx) => {
-      return prevPromise
-        .then(async res => {
-          if (idx !== 0) {
-            results.push(res);
-          }
-          return nextPromise();
-        })
-        .catch(async error => {
-          log(`:WARN > Retrying once due to issue: '${error}'`);
-          return items[idx]();
-        });
-    }, Promise.resolve());
-
-    return promiseReduction.then(res => {
-      results.push(res);
-      return results;
-    });
   }
 
   public goto(
@@ -910,15 +889,44 @@ export class Chrome extends EventEmitter {
   }
 
   public async then(handler: (any) => any): Promise<any | void> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const results = await this.resolveQueue(this.actionQueue, []);
-        this.actionQueue = [];
-        resolve(handler(results.length === 1 ? results[0] : results));
-      } catch (error) {
-        reject(error);
-      }
-      return null;
+    const results: any[] = [];
+    const actions = this.actionQueue.map((handler: () => Promise<any>) => ({
+      handler,
+      retries: 1,
+    }));
+
+    return new Promise((resolve, reject) => {
+      log(`:then() > Executing ${this.actionQueue.length} actions`);
+      const executePromiseAtIndex = idx => {
+        return actions[idx]
+          .handler()
+          .then(res => {
+            const nextIndex = ++idx;
+            results.push(res);
+            if (!actions[nextIndex]) {
+              this.actionQueue = []; // Drain the queue before resolving
+              return resolve(
+                handler(results.length === 1 ? results[0] : results),
+              );
+            }
+            return executePromiseAtIndex(nextIndex);
+          })
+          .catch(error => {
+            if (!actions[idx].retries) {
+              return reject(error);
+            }
+            log(
+              `:WARN > Retrying ${actions[idx]
+                .retries} time(s) due to issue: '${error}'`,
+            );
+            actions[idx] = {
+              retries: actions[idx].retries - 1,
+              handler: actions[idx].handler,
+            };
+            return executePromiseAtIndex(idx);
+          });
+      };
+      executePromiseAtIndex(0);
     });
   }
 

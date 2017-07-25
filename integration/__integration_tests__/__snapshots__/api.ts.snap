@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Chrome #evaluate should throw when errors happen in Chrome 1`] = `
+[Error: Error: I should propogate
+    at result (<anonymous>:4:23)
+    at <anonymous>:5:16
+    at <anonymous>:11:9]
+`;
