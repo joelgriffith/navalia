@@ -22,6 +22,23 @@ describe('Chrome', () => {
       expect(res).toEqual('about:blank');
     });
 
+    it('should throw when errors happen in Chrome', async () => {
+      const chrome = new Chrome();
+
+      return chrome
+        .evaluate(() => {
+          throw new Error('I should propogate');
+        })
+        .end()
+        .then(res => {
+          expect(res).toBeNull();
+        })
+        .catch(error => {
+          chrome.done();
+          expect(error).toMatchSnapshot();
+        });
+    });
+
     it('should allow variables to be passed in', async () => {
       const chrome = new Chrome();
       const res = await chrome.evaluate(
