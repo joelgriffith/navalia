@@ -1,3 +1,25 @@
+# 0.2.2
+
+## Fixes
+- When usin chains, and an error is thrown, Navalia will retry once and then fail the entire chain if the action fails again.
+
+## Breaking
+- `defaultTimeout` in the `chromeOptions` of Navalia is now just `timeout`.
+
+# 0.2.1
+
+## Fixes
+- Some issues in the chain pattern have been fixed.
+
+# 0.2.0
+
+## Features
+- New chainable API!
+- Most methods now return a value of some kind depending on the spirit.
+
+## Breaking
+- Some methods have different return values. Check the doc-site for the most up-to-date information.
+
 # 0.1.2
 
 ## Fixes
