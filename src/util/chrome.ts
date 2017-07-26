@@ -3,7 +3,7 @@ import * as chromeLauncher from 'chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
 
 export interface flags {
-  [propName: string]: boolean;
+  [propName: string]: boolean | string | number;
 }
 
 export interface cdp {
@@ -37,7 +37,13 @@ export const defaultFlags: flags = {
 export const transformChromeFlags = (flags: flags) => {
   return _.chain(flags)
     .pickBy(value => value)
-    .map((_value, key) => `--${_.kebabCase(key)}`)
+    .map((value, key) => {
+      const cliSwitch = `--${_.kebabCase(key)}`;
+      if (_.isBoolean(value) && value) {
+        return cliSwitch;
+      }
+      return `${cliSwitch}=${value}`;
+    })
     .value();
 };
 

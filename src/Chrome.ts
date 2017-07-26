@@ -12,6 +12,8 @@ export interface chromeConstructorOpts {
   flags?: chromeUtil.flags;
   cdp?: chromeUtil.cdp;
   timeout?: number;
+  username?: string;
+  password?: string;
 }
 
 export interface domOpts {
@@ -24,6 +26,8 @@ const defaultDomOpts: domOpts = {
 };
 
 export class Chrome extends EventEmitter {
+  private username: string;
+  private password: string;
   private cdp?: chromeUtil.cdp;
   private flags?: chromeUtil.flags;
   private kill: () => Promise<{}>;
@@ -42,6 +46,8 @@ export class Chrome extends EventEmitter {
     this.flags = opts.flags || chromeUtil.defaultFlags;
     this.defaultTimeout = opts.timeout || 1000;
     this.frameId = '';
+    this.username = opts.username || '';
+    this.password = opts.password || '';
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -783,6 +789,30 @@ export class Chrome extends EventEmitter {
       );
     });
 
+    return this;
+  }
+
+  public auth(username: string = '', password: string = ''): Chrome {
+    this.actionQueue.push(async () => {
+      log(
+        `:auth() > Using username '${username}' and password '${password}' for auth requests`,
+      );
+      const cdp = await this.getChromeCDP();
+      await cdp.Network.setRequestInterceptionEnabled({ enabled: true });
+
+      cdp.Network.requestIntercepted(params => {
+        cdp.Network.continueInterceptedRequest({
+          interceptionId: params.interceptionId,
+          authChallengeResponse: params.authChallenge
+            ? {
+                username: username,
+                password: password,
+                response: 'ProvideCredentials',
+              }
+            : undefined,
+        });
+      });
+    });
     return this;
   }
 

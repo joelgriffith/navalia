@@ -33,6 +33,7 @@ import { Chrome } from 'navalia';
 const chrome:Chrome = new Chrome({
   timeout: 60000,
 });
+```
 
 ### flags
 
