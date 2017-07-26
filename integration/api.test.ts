@@ -345,8 +345,8 @@ describe('Chrome', () => {
     it('should throw if the element is not found', () => {
       return chrome
         .check('input', { wait: false })
-        .then(results => {
-          expect(results).toEqual(null);
+        .then(res => {
+          expect(res).toEqual(null);
         })
         .catch(error => {
           expect(error).toMatchSnapshot();

@@ -572,7 +572,7 @@ export class Chrome extends EventEmitter {
           element.checked = true;
           return true;
         }
-        return false;
+        throw new Error(`:check() > selector ${selector} doesn't exist.`);
       }, selector);
     });
 

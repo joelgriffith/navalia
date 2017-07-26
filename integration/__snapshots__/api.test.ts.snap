@@ -1,16 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Chrome #check should throw if the element is not found 1`] = `
-[Error: [2mexpect([22m[31mreceived[39m[2m).toEqual([22m[32mexpected[39m[2m)[22m
-
-Expected value to equal:
-  [32mnull[39m
-Received:
-  [31m[false, false][39m
-
-Difference:
-
-  Comparing two different types of values. Expected [32mnull[39m but received [31marray[39m.]
+[Error: Error: :check() > selector input doesn't exist.
+    at selector (<anonymous>:9:23)
+    at <anonymous>:10:16
+    at <anonymous>:16:9]
 `;
 
 exports[`Chrome #click" should throw an error for elements that are not there 1`] = `
