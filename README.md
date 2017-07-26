@@ -5,14 +5,6 @@
 [![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
 [![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
-**DEPRECATED**
-
-It was a fun run folks. `chromeless` has been released and has more resources/PR muscle. I'd recommend you look into their module for your browser needs.
-
-I'll continue to keep this repo around for posterity sake. Thanks!
-
-**DEPRECATED**
-
 ```bash
 $ npm i -g navalia
 $ navalia --port 5000
