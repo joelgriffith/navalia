@@ -268,22 +268,45 @@ export class Chrome extends EventEmitter {
     return this;
   }
 
-  public screenshot(filePath?: string): Chrome {
+  public screenshot(selector?: string, opts: domOpts = defaultDomOpts): Chrome {
     this.actionQueue.push(async (): Promise<void | Buffer> => {
       const cdp = await this.getChromeCDP();
+      let screenOpts = {};
 
-      log(`:screenshot() > saving screenshot to ${filePath}`);
-
-      const base64Image = await cdp.Page.captureScreenshot();
-      const buffer = new Buffer(base64Image.data, 'base64');
-
-      if (filePath) {
-        if (!path.isAbsolute(filePath)) {
-          throw new Error(`Filepath is not absolute: ${filePath}`);
-        }
-
-        return fs.writeFileSync(filePath, buffer, { encoding: 'base64' });
+      if (opts.wait && selector) {
+        await this.waitNow(selector, opts.timeout);
       }
+
+      log(
+        `:screenshot() > saving screenshot${selector
+          ? `of element '${selector}'`
+          : 'page'}`,
+      );
+
+      if (selector) {
+        const {
+          root: { nodeId: documentNodeId },
+        } = await cdp.DOM.getDocument();
+        const { nodeId } = await cdp.DOM.querySelector({
+          selector: selector,
+          nodeId: documentNodeId,
+        });
+
+        const { model } = await cdp.DOM.getBoxModel({ nodeId });
+
+        screenOpts = {
+          clip: {
+            x: model.content[0],
+            y: model.content[1],
+            width: model.width,
+            height: model.height,
+            scale: 1,
+          },
+        };
+      }
+
+      const base64Image = await cdp.Page.captureScreenshot(screenOpts);
+      const buffer = new Buffer(base64Image.data, 'base64');
 
       return buffer;
     });

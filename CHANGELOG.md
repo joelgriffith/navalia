@@ -1,3 +1,13 @@
+# 0.2.3
+
+## Features
+- Support for proxies
+- Support for sites that use basic-auth via the `.auth(username, password`)` API
+- `.screenshot` takes a selector for the element to capture.
+
+## Breaking
+- The `.screenshot` method no longer supports saving to the FS (Consumers can do this with the `fs` module).
+
 # 0.2.2
 
 ## Fixes

@@ -3,9 +3,9 @@ title: .screenshot
 category: Chrome
 ---
 
-The `screenshot` method takes an optional single argument: a file-path (absolute) of where to save the screenshot.
+The `screenshot` method takes an optional single argument: a css-like selector of the element you want to capture.
 
-If no filepath is supplied the method will return a `Buffer` of `base64` encoded data.
+It returns a `base64` encoded buffer of the result.
 
 > The screenshot method generates a png file.
 
@@ -13,10 +13,9 @@ If no filepath is supplied the method will return a `Buffer` of `base64` encoded
 ```js
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
-const filepath = process.cwd() + 'google.png';
 
 chrome.goto('https://www.google.com')
-.then(() => chrome.screenshot(filepath))
+.then(() => chrome.screenshot('body'))
 .then(() => chrome.done());
 ```
 
@@ -24,11 +23,10 @@ chrome.goto('https://www.google.com')
 ```ts
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
-const filepath = process.cwd() + 'google.png';
 
 async function screenshot() {
   await chrome.goto('https://www.google.com');
-  await chrome.screenshot(filepath);
+  await chrome.screenshot('body');
   chrome.done();
 }
 
