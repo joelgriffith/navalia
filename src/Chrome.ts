@@ -268,7 +268,7 @@ export class Chrome extends EventEmitter {
     return this;
   }
 
-  public refresh(ignoreCache: boolean) {
+  public reload(ignoreCache: boolean) {
     this.actionQueue.push(async (): Promise<void> => {
       const cdp = await this.getChromeCDP();
 
