@@ -268,12 +268,14 @@ export class Chrome extends EventEmitter {
     return this;
   }
 
-  public reload(ignoreCache: boolean) {
+  public reload(ignoreCache: boolean): Chrome {
     this.actionQueue.push(async (): Promise<void> => {
       const cdp = await this.getChromeCDP();
 
       return cdp.Page.reload({ ignoreCache });
     });
+
+    return this;
   }
 
   public screenshot(selector?: string, opts: domOpts = defaultDomOpts): Chrome {
@@ -399,6 +401,20 @@ export class Chrome extends EventEmitter {
       log(`:html() > getting '${selector}' HTML`);
 
       return this.evalNow(html, selector);
+    });
+
+    return this;
+  }
+
+  public scroll(x: number = 0, y: number = 0): Chrome {
+    this.actionQueue.push(async (): Promise<void> => {
+      return this.evalNow(
+        (x, y) => {
+          return window.scrollTo(x, y);
+        },
+        x,
+        y,
+      );
     });
 
     return this;
@@ -788,6 +804,26 @@ export class Chrome extends EventEmitter {
         name: cookie.name,
         value: cookie.value,
       }));
+    });
+
+    return this;
+  }
+
+  public back(): Chrome {
+    this.actionQueue.push(async (): Promise<void> => {
+      return this.evalNow(() => {
+        return window.history.back();
+      });
+    });
+
+    return this;
+  }
+
+  public forward(): Chrome {
+    this.actionQueue.push(async (): Promise<void> => {
+      return this.evalNow(() => {
+        return window.history.forward();
+      });
     });
 
     return this;

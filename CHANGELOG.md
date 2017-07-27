@@ -1,9 +1,12 @@
-# 0.2.3
+# 1.0.0
 
 ## Features
 - Support for proxies
 - Support for sites that use basic-auth via the `.auth(username, password`)` API
 - New `refresh` API for reloading a page.
+- New `scroll` API for scrolling to x,y coordinates on a page.
+- New `back` API for going back in history.
+- New `forward` API for going forward in history.
 - `.screenshot` takes a selector for the element to capture.
 
 ## Breaking

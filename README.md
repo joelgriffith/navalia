@@ -10,7 +10,7 @@ $ npm i -g navalia
 $ navalia --port 5000
 ```
 
-Drive a headless browser with ease by using GraphQL. Navalia exposes both a GraphQL front-end and a set of modules for painless browser automation. There's no clunky API to learn or plugins to install.
+The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets you interact with Chrome and run parallel work with ease. Not using JavaScript? There's a GraphQL server that you can use to communicate with over HTTP allowing any runtime to drive Chrome.
 
 [View the library documentation here](https://joelgriffith.github.io/navalia/)
 
@@ -22,7 +22,7 @@ Drive a headless browser with ease by using GraphQL. Navalia exposes both a Grap
 - Run automated functional tests.
 - Discover visual regressions in your site.
 - Capture screenshots, pdfs, execute javascript, insert text, and more.
-- Use any runtime or framework you want!
+- The largest API for interacting with Chrome.
 
 ## GraphQL Front-end
 
