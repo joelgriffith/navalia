@@ -14,6 +14,7 @@
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'src/**/*.spec.ts' --exec 'ts-node' src/graphql/server.ts",
     "docs": "cd docs && bundle exec jekyll serve",
     "precommit": "lint-staged",
+    "prepublish": "npm run build",
     "prepublishOnly": "npm test && npm run build",
     "prettier": "prettier --single-quote --trailing-comma es5 --write \"src/**/*.ts\"",
     "release": "np",
