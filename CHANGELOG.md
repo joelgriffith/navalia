@@ -2,6 +2,7 @@
 
 ## Features
 - Connect to remote Chrome instances! See the doc page for examples.
+- `clear` API for clearing cookies and cache.
 
 ## Fixes
 - Logging for new methods in 1.0.0
