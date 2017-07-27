@@ -268,6 +268,14 @@ export class Chrome extends EventEmitter {
     return this;
   }
 
+  public refresh(ignoreCache: boolean) {
+    this.actionQueue.push(async (): Promise<void> => {
+      const cdp = await this.getChromeCDP();
+
+      return cdp.Page.reload({ ignoreCache });
+    });
+  }
+
   public screenshot(selector?: string, opts: domOpts = defaultDomOpts): Chrome {
     this.actionQueue.push(async (): Promise<void | Buffer> => {
       const cdp = await this.getChromeCDP();

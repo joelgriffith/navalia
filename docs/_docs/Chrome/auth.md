@@ -26,7 +26,6 @@ chrome
 import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
-// Getting an attribute
 async function getAll() {
 const { Chrome } = require('navalia');
 const chrome = new Chrome();
