@@ -18,6 +18,11 @@ export interface cdp {
   Input: any;
 }
 
+export interface remote {
+  host: string;
+  port: number;
+}
+
 export interface tab {
   tab: any;
   targetId: string;
@@ -51,6 +56,7 @@ export const transformChromeFlags = (flags: flags) => {
 export const launch = async (
   flags: flags,
   isHost: boolean = false,
+  remote?: remote,
 ): Promise<chromeInstance> => {
   const logLevel =
     process.env.DEBUG &&
@@ -62,14 +68,18 @@ export const launch = async (
   const chromeFlags = transformChromeFlags(flags);
 
   // Boot Chrome
-  const browser = await chromeLauncher.launch({
-    chromeFlags,
-    logLevel,
-  });
+  const browser = remote
+    ? Object.assign({}, remote, { kill: function() {}, pid: null })
+    : await chromeLauncher.launch({
+        chromeFlags,
+        logLevel,
+      });
 
   const cdp: cdp = isHost
-    ? await CDP({ target: `ws://localhost:${browser.port}/devtools/browser` })
-    : await CDP({ port: browser.port });
+    ? await CDP(
+        remote || { target: `ws://localhost:${browser.port}/devtools/browser` },
+      )
+    : await CDP(remote || { port: browser.port });
 
   await Promise.all(
     isHost

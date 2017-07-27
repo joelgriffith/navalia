@@ -11,6 +11,7 @@ const log = debug('navalia:chrome');
 export interface chromeConstructorOpts {
   flags?: chromeUtil.flags;
   cdp?: chromeUtil.cdp;
+  remote?: chromeUtil.remote;
   timeout?: number;
   username?: string;
   password?: string;
@@ -30,6 +31,7 @@ export class Chrome extends EventEmitter {
   private password: string;
   private cdp?: chromeUtil.cdp;
   private flags?: chromeUtil.flags;
+  private remote?: chromeUtil.remote;
   private kill: () => Promise<{}>;
   private defaultTimeout: number;
   private frameId: string;
@@ -48,6 +50,7 @@ export class Chrome extends EventEmitter {
     this.frameId = '';
     this.username = opts.username || '';
     this.password = opts.password || '';
+    this.remote = opts.remote;
   }
 
   private async getChromeCDP(): Promise<chromeUtil.cdp> {
@@ -55,10 +58,16 @@ export class Chrome extends EventEmitter {
       return this.cdp;
     }
 
-    log(`:getChromeCDP() > starting chrome`);
+    log(
+      `:getChromeCDP() > ${this.remote
+        ? `connecting to chrome at ${this.remote.host} on :${this.remote.port}`
+        : `starting chrome`}`,
+    );
 
     const { browser, cdp } = await chromeUtil.launch(
       this.flags || chromeUtil.defaultFlags,
+      false,
+      this.remote,
     );
 
     log(`:getChromeCDP() > chrome launched on port ${browser.port}`);
@@ -272,6 +281,8 @@ export class Chrome extends EventEmitter {
     this.actionQueue.push(async (): Promise<void> => {
       const cdp = await this.getChromeCDP();
 
+      log(`:reload() > reloading the page`);
+
       return cdp.Page.reload({ ignoreCache });
     });
 
@@ -408,6 +419,8 @@ export class Chrome extends EventEmitter {
 
   public scroll(x: number = 0, y: number = 0): Chrome {
     this.actionQueue.push(async (): Promise<void> => {
+      log(`:scroll() > scrolling to x = ${x} y = ${y}`);
+
       return this.evalNow(
         (x, y) => {
           return window.scrollTo(x, y);
@@ -415,6 +428,21 @@ export class Chrome extends EventEmitter {
         x,
         y,
       );
+    });
+
+    return this;
+  }
+
+  public clear(): Chrome {
+    this.actionQueue.push(async (): Promise<any[]> => {
+      const cdp = await this.getChromeCDP();
+
+      log(`:clear() > clearing cookies and cache`);
+
+      return Promise.all([
+        cdp.Network.clearBrowserCookies,
+        cdp.Network.clearBrowserCache,
+      ]);
     });
 
     return this;
@@ -811,6 +839,8 @@ export class Chrome extends EventEmitter {
 
   public back(): Chrome {
     this.actionQueue.push(async (): Promise<void> => {
+      log(`:back() > going back in history`);
+
       return this.evalNow(() => {
         return window.history.back();
       });
@@ -821,6 +851,8 @@ export class Chrome extends EventEmitter {
 
   public forward(): Chrome {
     this.actionQueue.push(async (): Promise<void> => {
+      log(`:forward() > going forward in history`);
+
       return this.evalNow(() => {
         return window.history.forward();
       });
@@ -862,7 +894,7 @@ export class Chrome extends EventEmitter {
   public auth(username: string = '', password: string = ''): Chrome {
     this.actionQueue.push(async () => {
       log(
-        `:auth() > Using username '${username}' and password '${password}' for auth requests`,
+        `:auth() > using username '${username}' and password '${password}' for auth requests`,
       );
       const cdp = await this.getChromeCDP();
       await cdp.Network.setRequestInterceptionEnabled({ enabled: true });

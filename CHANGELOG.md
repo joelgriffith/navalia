@@ -1,9 +1,18 @@
+# 1.1.0
+
+## Features
+- Connect to remote Chrome instances! See the doc page for examples.
+
+## Fixes
+- Logging for new methods in 1.0.0
+- Typos and other fixes
+
 # 1.0.0
 
 ## Features
 - Support for proxies
 - Support for sites that use basic-auth via the `.auth(username, password`)` API
-- New `refresh` API for reloading a page.
+- New `reload` API for reloading a page.
 - New `scroll` API for scrolling to x,y coordinates on a page.
 - New `back` API for going back in history.
 - New `forward` API for going forward in history.
