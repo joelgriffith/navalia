@@ -16,6 +16,8 @@ The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets
 
 [Install the npm module to run the GraphiQL client](https://www.npmjs.com/package/navalia)
 
+[Looking for test inspiration? Navalia uses itself for tests.](./integration/api.test.ts)
+
 ## Features
 
 - Scrape webpage data, even from JavaScript-heavy sites.
