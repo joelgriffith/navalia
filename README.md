@@ -5,17 +5,9 @@
 [![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
 [![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
-```bash
-$ npm i -g navalia
-$ navalia --port 5000
-```
-
 The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets you interact with Chrome and run parallel work with ease. Not using JavaScript? There's a GraphQL server that you can use to communicate with over HTTP allowing any runtime to drive Chrome.
 
 [View the library documentation here](https://joelgriffith.github.io/navalia/)
-
-[Install the npm module to run the GraphiQL client](https://www.npmjs.com/package/navalia)
-
 [Looking for test inspiration? Navalia uses itself for tests.](./integration/api.test.ts)
 
 ## Features
@@ -27,6 +19,13 @@ The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets
 - The largest API for interacting with Chrome.
 
 ## GraphQL Front-end
+
+Simply run `navalia` with a specified port e.g.
+
+```bash
+$ npm i -g navalia
+$ navalia --port 4000
+```
 
 ![NavaliaQL](./assets/NavaliaQL.gif)
 
