@@ -7,8 +7,8 @@
 
 The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets you interact with Chrome and run parallel work with ease. Not using JavaScript? There's a GraphQL server that you can use to communicate with over HTTP allowing any runtime to drive Chrome.
 
-[View the library documentation here](https://joelgriffith.github.io/navalia/)
-[Looking for test inspiration? Navalia uses itself for tests.](./integration/api.test.ts)
+- [📝 View the library documentation here](https://joelgriffith.github.io/navalia/)
+- [🎨 Looking for test inspiration? Navalia uses itself for tests.](./integration/api.test.ts)
 
 ## Features
 
@@ -32,9 +32,7 @@ $ navalia --port 4000
 ## Recipes
 
 - [Functional Testing](https://codeburst.io/composable-end-to-end-tests-for-react-apps-2ec82170af62)
-
 - [Website Code Coverage](https://codeburst.io/capturing-unused-application-code-2b7594a9fe06)
-
 - [Visual Regression Testing](https://codeburst.io/automatic-visual-regression-testing-23cc06471dd)
 
 ## Usage
