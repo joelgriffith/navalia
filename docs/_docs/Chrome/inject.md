@@ -3,9 +3,9 @@ title: .inject
 category: Chrome
 ---
 
-The `inject` method injects a JavaScript or CSS file into the page. It accpets a single-argument: a string of the filepath to inject.
+The `inject` method injects a JavaScript or CSS file into the page. It accepts a single-argument: a string of the filepath to inject.
 
-It will return a `boolean` indicating succes, or throw on failure.
+It will return a `boolean` indicating success, or throw on failure.
 
 *JavaScript*
 ```js
