@@ -16,7 +16,7 @@ const chrome = new Chrome();
 
 chrome.goto('https://www.google.com')
 .then(() => chrome.text('title'))
-.then((result) => console.log(res)) // Google
+.then((result) => console.log(result)) // Google
 .then(() => chrome.done());
 ```
 
