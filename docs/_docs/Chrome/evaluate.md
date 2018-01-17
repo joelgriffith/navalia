@@ -15,7 +15,7 @@ const { Chrome } = require('navalia');
 const chrome = new Chrome();
 
 chrome.goto('https://www.google.com')
-.then(() => chrome.evaluate(() => window.href.location))
+.then(() => chrome.evaluate(() => window.location.href))
 .then((result) => console.log(result)); // Prints `https://www.google.com`
 ```
 
@@ -25,7 +25,7 @@ import { Chrome } from 'navalia';
 const chrome = new Chrome();
 
 await chrome.goto('https://www.google.com');
-const res = await chrome.evaluate(() => window.href.location);
+const res = await chrome.evaluate(() => window.location.href);
 console.log(res);  // Prints `https://www.google.com`
 ```
 
