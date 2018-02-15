@@ -44,7 +44,7 @@ describe('ChromeHelper', () => {
           helper.onTabClose('tabTargetId');
           expect(chromeUtil.launch).toHaveBeenCalledWith(
             chromeUtil.defaultFlags,
-            true,
+            true
           );
           expect(chromeUtil.launch).toHaveBeenCalledTimes(1);
           done();

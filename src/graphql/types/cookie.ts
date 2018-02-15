@@ -12,7 +12,7 @@ export const cookie = {
           type: GraphQLString,
         },
       }),
-    }),
+    })
   ),
   description: `The check method checks a checkbox. It accepts a single argument: the css-style selector of the checkbox you want to check.`,
   args: {

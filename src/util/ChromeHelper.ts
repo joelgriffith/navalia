@@ -33,9 +33,9 @@ export class ChromeHelper {
     this.timeout = options.timeout || 1000;
 
     log(
-      `using up to ${this.maxActiveTabs === -1
-        ? 'infinite'
-        : this.maxActiveTabs} tabs`,
+      `using up to ${
+        this.maxActiveTabs === -1 ? 'infinite' : this.maxActiveTabs
+      } tabs`
     );
   }
 
@@ -65,9 +65,9 @@ export class ChromeHelper {
       })
       .then(({ tab, targetId }) => {
         log(
-          `chrome on ${this
-            .port} launched a new tab at ${targetId}. current tabs: ${this
-            .activeTabs}`,
+          `chrome on ${
+            this.port
+          } launched a new tab at ${targetId}. current tabs: ${this.activeTabs}`
         );
 
         const newTab = new Chrome({
@@ -87,8 +87,9 @@ export class ChromeHelper {
     this.activeTabs--;
     this.jobsComplete++;
     log(
-      `chrome on ${this.port} tab ${targetId} has closed. active tabs: ${this
-        .activeTabs}, completed jobs: ${this.jobsComplete}`,
+      `chrome on ${this.port} tab ${targetId} has closed. active tabs: ${
+        this.activeTabs
+      }, completed jobs: ${this.jobsComplete}`
     );
   }
 
@@ -101,8 +102,9 @@ export class ChromeHelper {
 
   public setExpired(): void {
     log(
-      `chrome on ${this.port} has been set expired, active tabs: ${this
-        .activeTabs}`,
+      `chrome on ${this.port} has been set expired, active tabs: ${
+        this.activeTabs
+      }`
     );
     this.isExpired = true;
   }

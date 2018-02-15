@@ -27,14 +27,11 @@ const defaultDomOpts: domOpts = {
 };
 
 export class Chrome extends EventEmitter {
-  private username: string;
-  private password: string;
   private cdp?: chromeUtil.cdp;
   private flags?: chromeUtil.flags;
   private remote?: chromeUtil.remote;
   private kill: () => Promise<{}>;
   private defaultTimeout: number;
-  private frameId: string;
   private styleSheetsLoaded: any[];
   private actionQueue: any[];
 
@@ -47,9 +44,6 @@ export class Chrome extends EventEmitter {
     this.cdp = opts.cdp;
     this.flags = opts.flags || chromeUtil.defaultFlags;
     this.defaultTimeout = opts.timeout || 1000;
-    this.frameId = '';
-    this.username = opts.username || '';
-    this.password = opts.password || '';
     this.remote = opts.remote;
   }
 
@@ -59,15 +53,19 @@ export class Chrome extends EventEmitter {
     }
 
     log(
-      `:getChromeCDP() > ${this.remote
-        ? `connecting to chrome at ${this.remote.host} on :${this.remote.port}`
-        : `starting chrome`}`,
+      `:getChromeCDP() > ${
+        this.remote
+          ? `connecting to chrome at ${this.remote.host} on :${
+              this.remote.port
+            }`
+          : `starting chrome`
+      }`
     );
 
     const { browser, cdp } = await chromeUtil.launch(
       this.flags || chromeUtil.defaultFlags,
       false,
-      this.remote,
+      this.remote
     );
 
     log(`:getChromeCDP() > chrome launched on port ${browser.port}`);
@@ -80,7 +78,7 @@ export class Chrome extends EventEmitter {
 
   private async runScript(
     script: string,
-    async: boolean = false,
+    async: boolean = false
   ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
@@ -94,7 +92,7 @@ export class Chrome extends EventEmitter {
   private async simulateKeyPress(
     type: string = 'char',
     key: string | null = null,
-    modifiers: number = 0,
+    modifiers: number = 0
   ): Promise<any> {
     const cdp = await this.getChromeCDP();
 
@@ -110,7 +108,7 @@ export class Chrome extends EventEmitter {
     const script = `
       (() => {
         const result = (${String(expression)}).apply(null, ${JSON.stringify(
-      args,
+      args
     )});
         if (result && result.then) {
           result.catch((error) => { throw new Error(error); });
@@ -128,7 +126,7 @@ export class Chrome extends EventEmitter {
     if (response && response.exceptionDetails) {
       throw new Error(
         response.exceptionDetails.exception.value ||
-          response.exceptionDetails.exception.description,
+          response.exceptionDetails.exception.description
       );
     }
 
@@ -141,7 +139,7 @@ export class Chrome extends EventEmitter {
 
   private async waitNow(
     waitParam: number | string,
-    timeout?: number,
+    timeout?: number
   ): Promise<any> {
     // If supplying a number, we assume that
     // you want to wait that number in MS before
@@ -157,7 +155,7 @@ export class Chrome extends EventEmitter {
     timeout = timeout || this.defaultTimeout;
 
     log(
-      `:wait() > waiting for selector "${waitParam}" a maximum of ${timeout}ms`,
+      `:wait() > waiting for selector "${waitParam}" a maximum of ${timeout}ms`
     );
 
     await this.evalNow(waitForElement, waitParam, timeout);
@@ -167,7 +165,7 @@ export class Chrome extends EventEmitter {
 
   private async focusNow(
     selector: string,
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Promise<boolean> {
     const cdp = await this.getChromeCDP();
 
@@ -185,7 +183,7 @@ export class Chrome extends EventEmitter {
 
     if (!node) {
       throw new Error(
-        `:focus() > Couldn't find element '${selector}' on the page.`,
+        `:focus() > Couldn't find element '${selector}' on the page.`
       );
     }
 
@@ -203,7 +201,7 @@ export class Chrome extends EventEmitter {
     } = {
       onload: true,
       coverage: false,
-    },
+    }
   ): Chrome {
     this.actionQueue.push(async (): Promise<any> => {
       const cdp = await this.getChromeCDP();
@@ -229,7 +227,7 @@ export class Chrome extends EventEmitter {
         let requestId = null;
         const timeoutId = setTimeout(
           () => reject(`Goto failed to load in the timeout specified`),
-          opts.timeout || this.defaultTimeout,
+          opts.timeout || this.defaultTimeout
         );
 
         cdp.Network.requestWillBeSent(params => {
@@ -260,9 +258,6 @@ export class Chrome extends EventEmitter {
             resolve(await this.evalNow(getPageURL));
           }
         });
-
-        const { frameId } = await cdp.Page.navigate({ url });
-        this.frameId = frameId;
       });
     });
 
@@ -299,9 +294,9 @@ export class Chrome extends EventEmitter {
       }
 
       log(
-        `:screenshot() > saving screenshot${selector
-          ? `of element '${selector}'`
-          : 'page'}`,
+        `:screenshot() > saving screenshot${
+          selector ? `of element '${selector}'` : 'page'
+        }`
       );
 
       if (selector) {
@@ -402,7 +397,7 @@ export class Chrome extends EventEmitter {
 
   public html(
     selector: string = 'html',
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Chrome {
     this.actionQueue.push(async (): Promise<string | null> => {
       if (opts.wait) {
@@ -426,7 +421,7 @@ export class Chrome extends EventEmitter {
           return window.scrollTo(x, y);
         },
         x,
-        y,
+        y
       );
     });
 
@@ -450,7 +445,7 @@ export class Chrome extends EventEmitter {
 
   public text(
     selector: string = 'body',
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Chrome {
     this.actionQueue.push(async (): Promise<string> => {
       if (opts.wait) {
@@ -609,7 +604,7 @@ export class Chrome extends EventEmitter {
   public type(
     selector: string,
     value: string,
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Chrome {
     this.actionQueue.push(async (): Promise<boolean> => {
       if (opts.wait) {
@@ -624,7 +619,7 @@ export class Chrome extends EventEmitter {
       const keys = value.split('') || [];
 
       await Promise.all(
-        keys.map(async key => this.simulateKeyPress('char', key)),
+        keys.map(async key => this.simulateKeyPress('char', key))
       );
 
       return true;
@@ -678,7 +673,7 @@ export class Chrome extends EventEmitter {
   public select(
     selector: string,
     option: string,
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Chrome {
     this.actionQueue.push(async (): Promise<boolean> => {
       if (opts.wait) {
@@ -751,7 +746,7 @@ export class Chrome extends EventEmitter {
       timeout = timeout || this.defaultTimeout;
 
       log(
-        `:wait() > waiting for selector "${waitParam}" a maximum of ${timeout}ms`,
+        `:wait() > waiting for selector "${waitParam}" a maximum of ${timeout}ms`
       );
 
       await this.evalNow(waitForElement, waitParam, timeout);
@@ -810,9 +805,11 @@ export class Chrome extends EventEmitter {
       const cdp = await this.getChromeCDP();
 
       log(
-        `:cookie() > ${value
-          ? `setting cookie ${name} to ${value}`
-          : name ? `getting cookie ${name}` : `getting all cookies`}`,
+        `:cookie() > ${
+          value
+            ? `setting cookie ${name} to ${value}`
+            : name ? `getting cookie ${name}` : `getting all cookies`
+        }`
       );
 
       const { cookies } = await cdp.Network.getAllCookies();
@@ -864,7 +861,7 @@ export class Chrome extends EventEmitter {
   public attr(
     selector: string,
     attribute: string,
-    opts: domOpts = defaultDomOpts,
+    opts: domOpts = defaultDomOpts
   ): Chrome {
     this.actionQueue.push(async (): Promise<string | null> => {
       if (opts.wait) {
@@ -884,7 +881,7 @@ export class Chrome extends EventEmitter {
           return null;
         },
         selector,
-        attribute,
+        attribute
       );
     });
 
@@ -894,7 +891,7 @@ export class Chrome extends EventEmitter {
   public auth(username: string = '', password: string = ''): Chrome {
     this.actionQueue.push(async () => {
       log(
-        `:auth() > using username '${username}' and password '${password}' for auth requests`,
+        `:auth() > using username '${username}' and password '${password}' for auth requests`
       );
       const cdp = await this.getChromeCDP();
       await cdp.Network.setRequestInterceptionEnabled({ enabled: true });
@@ -929,11 +926,11 @@ export class Chrome extends EventEmitter {
       // retrieved via different mechanisms
       const jsCoverages = await cdp.Profiler.takePreciseCoverage();
       const jsCoverage = jsCoverages.result.find(
-        scriptCoverage => scriptCoverage.url === src,
+        scriptCoverage => scriptCoverage.url === src
       );
 
       const styleSheet = this.styleSheetsLoaded.find(
-        css => css.sourceURL === src,
+        css => css.sourceURL === src
       );
       const { coverage: cssCoverages } = await cdp.CSS.takeCoverageDelta();
 
@@ -949,7 +946,7 @@ export class Chrome extends EventEmitter {
 
       if (styleSheet && styleSheet.styleSheetId) {
         const coverageCollection = cssCoverages.filter(
-          coverage => coverage.styleSheetId === styleSheet.styleSheetId,
+          coverage => coverage.styleSheetId === styleSheet.styleSheetId
         );
         const usedInfo = coverageCollection.reduce(
           (rangeAccum, range) => {
@@ -964,7 +961,7 @@ export class Chrome extends EventEmitter {
               used: rangeAccum.used + used,
             };
           },
-          { total: 0, used: 0 },
+          { total: 0, used: 0 }
         );
 
         return {
@@ -991,7 +988,7 @@ export class Chrome extends EventEmitter {
                       : 0),
                 };
               },
-              startingResults,
+              startingResults
             );
 
             return {
@@ -1002,7 +999,7 @@ export class Chrome extends EventEmitter {
               unused: fnAccum.unused + functionStats.unused,
             };
           },
-          startingResults,
+          startingResults
         );
 
         return {
@@ -1035,7 +1032,7 @@ export class Chrome extends EventEmitter {
             if (!actions[nextIndex]) {
               this.actionQueue = []; // Drain the queue before resolving
               return resolve(
-                handler(results.length === 1 ? results[0] : results),
+                handler(results.length === 1 ? results[0] : results)
               );
             }
             return executePromiseAtIndex(nextIndex);
@@ -1045,8 +1042,9 @@ export class Chrome extends EventEmitter {
               return reject(error);
             }
             log(
-              `:WARN > Retrying ${actions[idx]
-                .retries} time(s) due to issue: '${error}'`,
+              `:WARN > Retrying ${
+                actions[idx].retries
+              } time(s) due to issue: '${error}'`
             );
             actions[idx] = {
               retries: actions[idx].retries - 1,

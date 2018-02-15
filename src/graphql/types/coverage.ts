@@ -21,7 +21,7 @@ export const coverage = {
           type: GraphQLFloat,
         },
       }),
-    }),
+    })
   ),
   description: `The coverage method checks the coverage info for a particular resource (JS or CSS). In order to collect coverage, you must query goto with a second parameter of { coverage: true }. This is so that Navalia can properly instrument Chrome to collect coverage.`,
   args: {

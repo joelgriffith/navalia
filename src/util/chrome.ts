@@ -30,7 +30,7 @@ export interface tab {
 }
 
 export interface chromeInstance {
-  browser: chromeLauncher.LaunchedChrome;
+  browser: any;
   cdp: cdp;
 }
 
@@ -57,7 +57,7 @@ export const transformChromeFlags = (flags: flags) => {
 export const launch = async (
   flags: flags,
   isHost: boolean = false,
-  remote?: remote,
+  remote?: remote
 ): Promise<chromeInstance> => {
   const logLevel =
     process.env.DEBUG &&
@@ -95,7 +95,7 @@ export const launch = async (
           cdp.Network.enable(),
           cdp.DOM.enable(),
           cdp.CSS.enable(),
-        ],
+        ]
   );
 
   // Return both the browser and the CDP instance

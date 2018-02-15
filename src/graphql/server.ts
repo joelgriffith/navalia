@@ -22,11 +22,11 @@ const start = (port = 4000) => {
           time: Date.now() - start,
         }),
       };
-    }),
+    })
   );
 
   app.listen(port, () =>
-    console.log(`Navalia is ready at: http://127.0.0.1:${port}`),
+    console.log(`Navalia is ready at: http://127.0.0.1:${port}`)
   );
 };
 

@@ -1,6 +1,6 @@
 export function waitForElement(
   selector: string,
-  timeout: number,
+  timeout: number
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const timeOutId = setTimeout(() => {
@@ -34,7 +34,7 @@ export function click(selector: string): boolean {
   const element = document.querySelector(selector);
   if (!element) {
     throw new Error(
-      `:click() > Unable to find element by selector: ${selector}`,
+      `:click() > Unable to find element by selector: ${selector}`
     );
   }
   const event = document.createEvent('MouseEvent');
@@ -47,7 +47,7 @@ export function html(selector: string): string {
   const element = document.querySelector(selector);
   if (!element) {
     throw new Error(
-      `:html() > Unable to find element by selector: ${selector}`,
+      `:html() > Unable to find element by selector: ${selector}`
     );
   }
   return element.outerHTML;

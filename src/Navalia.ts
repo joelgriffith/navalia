@@ -56,7 +56,7 @@ export class Navalia {
 
     if (!chrome.isIdle()) {
       log(
-        `instance ${chrome.port} still has active work, waiting till finished`,
+        `instance ${chrome.port} still has active work, waiting till finished`
       );
       chrome.setExpired();
       return;
@@ -80,11 +80,11 @@ export class Navalia {
 
   private async execute(
     chromeHelper: ChromeHelper | undefined,
-    queueItem: queueItem | undefined,
+    queueItem: queueItem | undefined
   ): Promise<any> {
     if (!chromeHelper || (!queueItem || !queueItem.handler)) {
       throw new Error(
-        `#execute was called with no instance of Chrome or a Job`,
+        `#execute was called with no instance of Chrome or a Job`
       );
     }
 
@@ -104,7 +104,9 @@ export class Navalia {
 
       if (chromeHelper.isFull()) {
         log(
-          `instance ${chromeHelper.port} at max capacity, not taking work from queue`,
+          `instance ${
+            chromeHelper.port
+          } at max capacity, not taking work from queue`
         );
         this.destroy(chromeHelper);
         return;
@@ -112,7 +114,7 @@ export class Navalia {
 
       if (chromeHelper.getIsExpired()) {
         log(
-          `instance ${chromeHelper.port} is expired and isn't taking new work`,
+          `instance ${chromeHelper.port} is expired and isn't taking new work`
         );
         this.destroy(chromeHelper);
         return;
@@ -120,7 +122,9 @@ export class Navalia {
 
       if (chromeHelper.getJobsComplete() === this.maxJobs) {
         log(
-          `instance ${chromeHelper.port} has completed maximum jobs and is closing`,
+          `instance ${
+            chromeHelper.port
+          } has completed maximum jobs and is closing`
         );
         this.destroy(chromeHelper);
         return;

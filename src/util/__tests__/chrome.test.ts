@@ -19,7 +19,7 @@ jest.mock('chrome-remote-interface', () => () =>
     CSS: {
       enable: jest.fn(),
     },
-  }),
+  })
 );
 
 import * as chromeLauncher from 'chrome-launcher';
@@ -38,7 +38,7 @@ describe('chrome utils', () => {
         data: {
           webSocketDebuggerUrl: 'ws://127.0.0.1/mocked/debugger/',
         },
-      }),
+      })
     );
   });
 
