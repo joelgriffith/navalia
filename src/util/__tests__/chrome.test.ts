@@ -1,6 +1,7 @@
 process.env.DEBUG = '';
 
 jest.mock('chrome-launcher');
+jest.mock('axios');
 jest.mock('chrome-remote-interface', () => () =>
   Promise.resolve({
     Page: {
@@ -22,6 +23,7 @@ jest.mock('chrome-remote-interface', () => () =>
 );
 
 import * as chromeLauncher from 'chrome-launcher';
+import axios from 'axios';
 import {
   createTab,
   defaultFlags,
@@ -30,6 +32,16 @@ import {
 } from '../chrome';
 
 describe('chrome utils', () => {
+  beforeEach(() => {
+    axios.get.mockImplementation(() =>
+      Promise.resolve({
+        data: {
+          webSocketDebuggerUrl: 'ws://127.0.0.1/mocked/debugger/',
+        },
+      }),
+    );
+  });
+
   afterEach(() => {
     jest.resetAllMocks();
   });
@@ -77,9 +89,7 @@ describe('chrome utils', () => {
   describe('#launch', () => {
     it('should return the launched browser and cdp instance if `isHost` is false', () => {
       const mockBrowser = { port: 1243 };
-      chromeLauncher.launch.mockImplementation(() =>
-        Promise.resolve(mockBrowser),
-      );
+      chromeLauncher.launch = jest.fn(() => Promise.resolve(mockBrowser));
 
       return launch(defaultFlags).then(({ browser, cdp }) => {
         expect(chromeLauncher.launch).toHaveBeenCalledWith({
