@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import axios from 'axios';
 import * as chromeLauncher from 'chrome-launcher';
 import * as CDP from 'chrome-remote-interface';
 
@@ -75,10 +76,14 @@ export const launch = async (
         logLevel,
       });
 
+  const browserDebuggerURL = isHost
+    ? await axios
+        .get(`ws://localhost:${browser.port}/json/version`)
+        .then(res => res.data.webSocketDebuggerUrl)
+    : '';
+
   const cdp: cdp = isHost
-    ? await CDP(
-        remote || { target: `ws://localhost:${browser.port}/devtools/browser` },
-      )
+    ? await CDP(remote || { target: browserDebuggerURL })
     : await CDP(remote || { port: browser.port });
 
   await Promise.all(

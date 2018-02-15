@@ -48,6 +48,7 @@
     "typescript": "^2.4.1"
   },
   "dependencies": {
+    "axios": "^0.17.1",
     "chrome-launcher": "^0.3.0",
     "chrome-remote-interface": "^0.24.1",
     "debug": "^2.6.8",

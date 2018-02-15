@@ -77,7 +77,9 @@ describe('chrome utils', () => {
   describe('#launch', () => {
     it('should return the launched browser and cdp instance if `isHost` is false', () => {
       const mockBrowser = { port: 1243 };
-      chromeLauncher.launch = jest.fn(() => Promise.resolve(mockBrowser));
+      chromeLauncher.launch.mockImplementation(() =>
+        Promise.resolve(mockBrowser),
+      );
 
       return launch(defaultFlags).then(({ browser, cdp }) => {
         expect(chromeLauncher.launch).toHaveBeenCalledWith({
