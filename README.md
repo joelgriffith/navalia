@@ -5,6 +5,8 @@
 [![dependencies Status](https://david-dm.org/joelgriffith/navalia/status.svg)](https://david-dm.org/joelgriffith/navalia)
 [![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
+# DEPRECATION WARNING: Unfortunately it's time for me to deprecate this library as I cannot give it the time it needs. If you're interested in maintaining this lib, send me message (joel at joelgriffith dot net). I'd recommend using something like chromeless or puppeteer if possible. Thanks!
+
 The bullet-proof, fast, and most feature-rich Chrome driver around. Navalia lets you interact with Chrome and run parallel work with ease. Not using JavaScript? There's a GraphQL server that you can use to communicate with over HTTP allowing any runtime to drive Chrome.
 
 - [📝 View the library documentation here](https://joelgriffith.github.io/navalia/)
